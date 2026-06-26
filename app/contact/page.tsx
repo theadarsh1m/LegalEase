@@ -12,7 +12,7 @@ export default function ContactPage() {
           </CardHeader>
           <CardContent className="space-y-5 text-base leading-8 text-muted-foreground">
             <p>
-              JusticeAlly is product infrastructure, not a law chamber. If you need product support, use the repository, deployment,
+              LegalEase is product infrastructure, not a law chamber. If you need product support, use the repository, deployment,
               or workspace admin channels attached to your implementation.
             </p>
             <p>

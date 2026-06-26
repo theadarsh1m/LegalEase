@@ -22,7 +22,7 @@ const firebaseAdminEnvSchema = z.object({
 })
 
 const sessionEnvSchema = z.object({
-  SESSION_COOKIE_NAME: z.string().min(1).default("justiceally_session"),
+  SESSION_COOKIE_NAME: z.string().min(1).default("legalease_session"),
   SESSION_SECRET: z.string().min(32).optional(),
 })
 
@@ -30,7 +30,7 @@ const cloudinaryEnvSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().min(1),
   CLOUDINARY_API_KEY: z.string().min(1),
   CLOUDINARY_API_SECRET: z.string().min(1),
-  CLOUDINARY_FOLDER: z.string().min(1).default("justiceally"),
+  CLOUDINARY_FOLDER: z.string().min(1).default("legalease"),
 })
 
 const mongoEnvSchema = z.object({
@@ -73,7 +73,7 @@ function getFirebaseAdminCandidateEnv() {
 
 function getSessionCandidateEnv() {
   return {
-    SESSION_COOKIE_NAME: process.env.SESSION_COOKIE_NAME ?? "justiceally_session",
+    SESSION_COOKIE_NAME: process.env.SESSION_COOKIE_NAME ?? "legalease_session",
     SESSION_SECRET: process.env.SESSION_SECRET,
   }
 }
@@ -83,7 +83,7 @@ function getCloudinaryCandidateEnv() {
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
-    CLOUDINARY_FOLDER: process.env.CLOUDINARY_FOLDER ?? "justiceally",
+    CLOUDINARY_FOLDER: process.env.CLOUDINARY_FOLDER ?? "legalease",
   }
 }
 
@@ -183,7 +183,7 @@ export function getGeminiApiKey() {
 }
 
 export function getSessionCookieName() {
-  return sessionEnvResult.success ? sessionEnvResult.data.SESSION_COOKIE_NAME : "justiceally_session"
+  return sessionEnvResult.success ? sessionEnvResult.data.SESSION_COOKIE_NAME : "legalease_session"
 }
 
 export function getSessionSecret() {

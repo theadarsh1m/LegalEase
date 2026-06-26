@@ -442,7 +442,7 @@ export function AssistantWorkspace({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => downloadJsonFile(`justiceally-assistant-${conversationId ?? "draft"}.json`, conversationExport)}
+                    onClick={() => downloadJsonFile(`legalease-assistant-${conversationId ?? "draft"}.json`, conversationExport)}
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Export JSON
@@ -470,7 +470,7 @@ export function AssistantWorkspace({
                           {message.role === "assistant" ? (
                             <>
                               <Scale className="h-4 w-4" />
-                              JusticeAlly
+                              LegalEase
                             </>
                           ) : (
                             <>

@@ -1,6 +1,6 @@
-# JusticeAlly
+# LegalEase
 
-JusticeAlly is a rebuilt Next.js legal guidance platform for Indian users. It replaces the original v0-style demo with a working full-stack architecture:
+LegalEase is a rebuilt Next.js legal guidance platform for Indian users. It replaces the original v0-style demo with a working full-stack architecture:
 
 - Next.js App Router frontend and API routes
 - Firebase Authentication on the client
@@ -86,7 +86,7 @@ npm run dev
 
 ## RAG flow
 
-1. The seed corpus lives in [`content/legal-corpus.json`](/Users/abhinavsahu/Desktop/Project/justiceAlly/JusticeAlly/content/legal-corpus.json).
+1. The seed corpus lives in [`content/legal-corpus.json`](/Users/abhinavsahu/Desktop/Project/legalEase/LegalEase/content/legal-corpus.json).
 2. The seeding script chunks documents and stores embeddings in Firestore `knowledgeChunks`.
 3. `/api/chat` embeds the user query, retrieves relevant chunks, builds a grounded prompt, calls Gemini, then stores the result.
 4. The UI renders both the answer and the retrieved source cards.

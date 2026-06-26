@@ -59,7 +59,7 @@ export function AuthPanel({ mode, nextPath = "/workspace" }: AuthPanelProps) {
       description: "Access your saved conversations, uploaded documents, and legal workflows securely.",
     },
     signup: {
-      title: "Create your JusticeAlly account",
+      title: "Create your LegalEase account",
       description: "Use email or Google sign-in and keep your workspace synced across sessions.",
     },
     forgot: {
@@ -211,7 +211,7 @@ export function AuthPanel({ mode, nextPath = "/workspace" }: AuthPanelProps) {
                   : "Reset access and get back into your legal workspace."}
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground md:text-lg">
-              JusticeAlly combines persistent sessions, document storage, AI analysis, and retrieval-grounded legal
+              LegalEase combines persistent sessions, document storage, AI analysis, and retrieval-grounded legal
               workflows so your work does not reset every time you leave the page.
             </p>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -328,7 +328,7 @@ export function AuthPanel({ mode, nextPath = "/workspace" }: AuthPanelProps) {
                     Create account
                   </Button>
                   <p className="text-sm text-muted-foreground">
-                    By continuing you agree to the platform terms and acknowledge that JusticeAlly provides general legal
+                    By continuing you agree to the platform terms and acknowledge that LegalEase provides general legal
                     information, not representation.
                   </p>
                   <div className="rounded-2xl border border-emerald-900/10 bg-emerald-50/70 p-4 text-sm text-emerald-950">

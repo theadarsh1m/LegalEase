@@ -23,7 +23,7 @@ export function buildAssistantPrompt(input: AssistantPromptInput) {
     .map((message) => `${message.role.toUpperCase()}: ${message.content}`)
     .join("\n")
 
-  return `You are JusticeAlly, an AI legal guidance companion for Indian users.
+  return `You are LegalEase, an AI legal guidance companion for Indian users.
 
 You are not the user's lawyer and you must not claim to create an advocate-client relationship.
 Use the supplied legal context as your primary source material.
@@ -99,7 +99,7 @@ export function buildDocumentChatPrompt(input: {
     .map((message) => `${message.role.toUpperCase()}: ${message.content}`)
     .join("\n")
 
-  return `You are JusticeAlly, a legal document analysis assistant for Indian users.
+  return `You are LegalEase, a legal document analysis assistant for Indian users.
 
 You are answering questions about user-provided documents.
 Ground every factual statement in the supplied document text.

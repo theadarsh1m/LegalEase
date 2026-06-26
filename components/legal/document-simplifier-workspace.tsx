@@ -72,7 +72,7 @@ function downloadJsonFile(filename: string, payload: unknown) {
 export function DocumentSimplifierWorkspace() {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [title, setTitle] = useState("JusticeAlly document session")
+  const [title, setTitle] = useState("LegalEase document session")
   const [text, setText] = useState("")
   const [question, setQuestion] = useState("")
   const [artifactId, setArtifactId] = useState("")
@@ -450,7 +450,7 @@ export function DocumentSimplifierWorkspace() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => downloadJsonFile(`justiceally-document-chat-${title || "session"}.json`, exportPayload)}
+                    onClick={() => downloadJsonFile(`legalease-document-chat-${title || "session"}.json`, exportPayload)}
                     disabled={workingDocuments.length === 0}
                   >
                     <Download className="mr-2 h-4 w-4" />
@@ -520,7 +520,7 @@ export function DocumentSimplifierWorkspace() {
                           {message.role === "assistant" ? (
                             <>
                               <Sparkles className="h-4 w-4" />
-                              JusticeAlly
+                              LegalEase
                             </>
                           ) : (
                             <>

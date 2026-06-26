@@ -268,7 +268,7 @@ export function DocumentGeneratorWorkspace({ initialTemplateId }: DocumentGenera
                     className="w-full"
                     onClick={() =>
                       downloadJsonFile(
-                        `justiceally-draft-${activeTemplate?.id ?? "template"}.json`,
+                        `legalease-draft-${activeTemplate?.id ?? "template"}.json`,
                         exportPayload,
                       )
                     }

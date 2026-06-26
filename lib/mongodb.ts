@@ -3,18 +3,18 @@ import { getMongoConfig } from "@/lib/env"
 
 declare global {
   // eslint-disable-next-line no-var
-  var __justiceAllyMongoClientPromise: Promise<MongoClient> | undefined
+  var __legalEaseMongoClientPromise: Promise<MongoClient> | undefined
   // eslint-disable-next-line no-var
-  var __justiceAllyMongoIndexesPromise: Promise<void> | undefined
+  var __legalEaseMongoIndexesPromise: Promise<void> | undefined
 }
 
 function deriveDatabaseName(uri: string) {
   try {
     const url = new URL(uri)
     const pathname = url.pathname.replace(/^\/+/, "")
-    return pathname || "justiceAlly-db"
+    return pathname || "legalEase-db"
   } catch {
-    return "justiceAlly-db"
+    return "legalEase-db"
   }
 }
 
@@ -25,12 +25,12 @@ async function getMongoClient() {
     throw new Error("MongoDB is not configured. Add MONGODB_URI to persist user data.")
   }
 
-  if (!global.__justiceAllyMongoClientPromise) {
+  if (!global.__legalEaseMongoClientPromise) {
     const client = new MongoClient(config.uri)
-    global.__justiceAllyMongoClientPromise = client.connect()
+    global.__legalEaseMongoClientPromise = client.connect()
   }
 
-  return global.__justiceAllyMongoClientPromise
+  return global.__legalEaseMongoClientPromise
 }
 
 async function getRawMongoDb() {
@@ -45,8 +45,8 @@ async function getRawMongoDb() {
 }
 
 async function ensureIndexes() {
-  if (!global.__justiceAllyMongoIndexesPromise) {
-    global.__justiceAllyMongoIndexesPromise = (async () => {
+  if (!global.__legalEaseMongoIndexesPromise) {
+    global.__legalEaseMongoIndexesPromise = (async () => {
       const db = await getRawMongoDb()
 
       await Promise.all([
@@ -58,7 +58,7 @@ async function ensureIndexes() {
     })()
   }
 
-  await global.__justiceAllyMongoIndexesPromise
+  await global.__legalEaseMongoIndexesPromise
 }
 
 export async function getMongoDb() {

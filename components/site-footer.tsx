@@ -36,7 +36,7 @@ export function SiteFooter() {
       <div className="container-shell py-12">
         <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div className="max-w-md">
-            <p className="font-display text-3xl font-semibold">JusticeAlly</p>
+            <p className="font-display text-3xl font-semibold">LegalEase</p>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
               AI-assisted legal guidance for Indian users, grounded in a searchable knowledge base, backed by Firebase
               auth and conversation history, and designed to make first-step legal workflows usable.
@@ -58,7 +58,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-10 border-t border-white/80 pt-6 text-sm text-muted-foreground">
-          JusticeAlly provides general legal information and drafting assistance. It does not replace a licensed
+          LegalEase provides general legal information and drafting assistance. It does not replace a licensed
           advocate reviewing the exact facts of a matter.
         </div>
       </div>

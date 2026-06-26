@@ -23,7 +23,7 @@ export async function SiteHeader() {
             <Scale className="h-5 w-5" />
           </div>
           <div>
-            <p className="font-display text-2xl font-semibold leading-none">JusticeAlly</p>
+            <p className="font-display text-2xl font-semibold leading-none">LegalEase</p>
             <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Legal guidance platform</p>
           </div>
         </Link>
@@ -74,7 +74,7 @@ export async function SiteHeader() {
           </SheetTrigger>
           <SheetContent side="right" className="w-[320px] bg-[rgba(251,247,241,0.98)]">
             <SheetHeader>
-              <SheetTitle className="font-display text-3xl">JusticeAlly</SheetTitle>
+              <SheetTitle className="font-display text-3xl">LegalEase</SheetTitle>
               <SheetDescription>Assistant, RAG search, document drafting, and emergency guidance.</SheetDescription>
             </SheetHeader>
 

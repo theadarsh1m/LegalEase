@@ -10,7 +10,7 @@ export default function PrivacyPage() {
           </CardHeader>
           <CardContent className="space-y-5 text-base leading-8 text-muted-foreground">
             <p>
-              JusticeAlly stores account and workspace data in Firebase when that integration is configured. That can include email
+              LegalEase stores account and workspace data in Firebase when that integration is configured. That can include email
               identity, conversation summaries, generated documents, and other artifacts created by the user inside the platform.
             </p>
             <p>

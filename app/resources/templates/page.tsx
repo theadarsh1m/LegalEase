@@ -11,7 +11,7 @@ export default function TemplatesPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Public resource</p>
           <h1 className="mt-4 font-display text-5xl font-semibold leading-tight md:text-6xl">Document templates and guided drafting.</h1>
           <p className="mt-4 text-base leading-8 text-muted-foreground md:text-lg">
-            JusticeAlly uses structured templates for first-pass legal complaints, notices, RTIs, and workplace reports.
+            LegalEase uses structured templates for first-pass legal complaints, notices, RTIs, and workplace reports.
           </p>
         </div>
 

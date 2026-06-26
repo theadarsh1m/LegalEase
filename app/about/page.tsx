@@ -6,11 +6,11 @@ export default function AboutPage() {
       <div className="container-shell grid gap-6 lg:grid-cols-[0.7fr_0.3fr]">
         <Card className="glass-panel border-white/70">
           <CardHeader>
-            <CardTitle className="text-5xl">About JusticeAlly</CardTitle>
+            <CardTitle className="text-5xl">About LegalEase</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 text-base leading-8 text-muted-foreground">
             <p>
-              JusticeAlly is being rebuilt as a full-stack legal guidance platform for Indian users. The goal is not to imitate a
+              LegalEase is being rebuilt as a full-stack legal guidance platform for Indian users. The goal is not to imitate a
               law firm site. The goal is to help a user move from panic and vague questions to a structured understanding of rights,
               evidence, next steps, and first-pass legal documents.
             </p>

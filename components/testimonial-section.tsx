@@ -8,7 +8,7 @@ export function TestimonialSection() {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold tracking-tight mb-4">What Our Users Say</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            JusticeAlly has helped thousands of people navigate complex legal situations.
+            LegalEase has helped thousands of people navigate complex legal situations.
           </p>
         </div>
 
@@ -24,7 +24,7 @@ export function TestimonialSection() {
                 <p className="text-sm text-muted-foreground">Delhi</p>
               </div>
               <p className="text-center italic">
-                "JusticeAlly helped me understand my rights as a tenant when my landlord was trying to unfairly increase
+                "LegalEase helped me understand my rights as a tenant when my landlord was trying to unfairly increase
                 my rent. The document generator created a perfect response letter!"
               </p>
             </CardContent>
@@ -41,7 +41,7 @@ export function TestimonialSection() {
                 <p className="text-sm text-muted-foreground">Bangalore</p>
               </div>
               <p className="text-center italic">
-                "As a freelancer, I was always worried about contract terms. JusticeAlly simplified the legal jargon and
+                "As a freelancer, I was always worried about contract terms. LegalEase simplified the legal jargon and
                 helped me negotiate better terms with clients."
               </p>
             </CardContent>
@@ -58,7 +58,7 @@ export function TestimonialSection() {
                 <p className="text-sm text-muted-foreground">Mumbai</p>
               </div>
               <p className="text-center italic">
-                "When I faced workplace harassment, I didn't know what to do. JusticeAlly guided me through the process
+                "When I faced workplace harassment, I didn't know what to do. LegalEase guided me through the process
                 of filing a complaint and connected me with a support organization."
               </p>
             </CardContent>

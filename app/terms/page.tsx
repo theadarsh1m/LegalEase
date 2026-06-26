@@ -10,7 +10,7 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-5 text-base leading-8 text-muted-foreground">
             <p>
-              JusticeAlly provides general legal information, document drafting assistance, and workflow tooling. It does not create an
+              LegalEase provides general legal information, document drafting assistance, and workflow tooling. It does not create an
               advocate-client relationship and does not replace case-specific advice from a licensed lawyer.
             </p>
             <p>

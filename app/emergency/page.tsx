@@ -37,7 +37,7 @@ export default function EmergencyPage() {
               Use this page when the legal problem is also a safety problem.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-white/80 md:text-lg">
-              If someone is in immediate danger, use emergency response channels first. JusticeAlly can help frame the next
+              If someone is in immediate danger, use emergency response channels first. LegalEase can help frame the next
               legal steps after the urgent risk is contained.
             </p>
           </div>

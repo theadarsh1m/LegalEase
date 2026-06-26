@@ -95,7 +95,7 @@ export function HeroSection() {
     <>
       <section className="relative bg-gradient-to-b from-slate-900 to-slate-800 text-white py-20 md:py-32">
         <div className="container flex flex-col items-center text-center">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">JusticeAlly: Your AI Legal Companion</h1>
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">LegalEase: Your AI Legal Companion</h1>
           <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mb-10">
             Get instant legal insights and guidance with our AI-powered platform. Understand your rights, explore legal
             options, and take control of your legal journey.
