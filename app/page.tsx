@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { ArrowRight, Book, Clock, FileText as FileTextIcon, MessageSquare, Shield, Sparkles } from "lucide-react"
 import { getOptionalSessionUser } from "@/lib/auth"
 import { getSetupSummary } from "@/lib/env"
@@ -77,7 +78,7 @@ export default async function HomePage() {
               <div className={styles.assistantPanel}>
                 <div className={styles.panelHeader}>
                   <div className={styles.aiAvatar}>
-                    <Shield className="h-5 w-5" />
+                    <Image src="/legalease.png" alt="LegalEase" width={28} height={28} className="rounded-md object-contain" />
                   </div>
                   <div>
                     <div className={styles.aiTitle}>LegalEase AI</div>

@@ -83,4 +83,30 @@
   .page-section {
     @apply py-14 md:py-20;
   }
+
+  .nav-link {
+    @apply relative inline-flex items-center justify-center text-sm font-medium transition-colors;
+    color: hsl(var(--foreground) / 0.8);
+    padding: 0.5rem 0.75rem;
+    margin: 0 0.25rem;
+  }
+  .nav-link:hover {
+    color: hsl(var(--foreground));
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 2px;
+    bottom: 2px;
+    left: 0;
+    background-color: hsl(var(--primary));
+    transform-origin: bottom right;
+    transition: transform 0.3s ease-out;
+  }
+  .nav-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+  }
 }

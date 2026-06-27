@@ -1,12 +1,14 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useMemo, useState } from "react"
 import {
   BookOpenText,
   Download,
   FileText,
   Loader2,
+  MessageSquare,
   MessageSquareQuote,
   Plus,
   Scale,
@@ -285,58 +287,43 @@ export function AssistantWorkspace({
   return (
     <main className="page-section">
       <div className="container-shell space-y-8">
-        <section className="glass-panel overflow-hidden border-white/70 bg-[linear-gradient(135deg,rgba(19,70,56,0.98),rgba(38,27,16,0.92))] p-8 text-white md:p-10">
-          <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/80">
-                <Scale className="h-4 w-4" />
+        {/* ── Page Header: open layout ── */}
+        <section>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                <Scale className="h-3.5 w-3.5" />
                 RAG-grounded AI legal guidance
               </div>
-              <h1 className="mt-5 max-w-4xl font-display text-5xl font-semibold leading-[1.02] md:text-6xl">
+              <h1 className="mt-5 font-display text-4xl font-semibold leading-tight sm:text-5xl">
                 A cleaner legal assistant that stays close to sources and next steps.
               </h1>
-              <p className="mt-4 max-w-2xl text-base leading-8 text-white/78 md:text-lg">
+              <p className="mt-4 text-base leading-7 text-muted-foreground md:text-lg">
                 Use retrieved legal context for Indian law guidance, continue saved threads, and export the conversation
                 when you need a structured case record.
               </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Badge className="border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/10" variant="outline">
-                  Gemini answers + legal retrieval
-                </Badge>
-                <Badge className="border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/10" variant="outline">
-                  Thread history
-                </Badge>
-                <Badge className="border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/10" variant="outline">
-                  JSON export
-                </Badge>
-              </div>
             </div>
+          </div>
 
-            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
-              <div className="rounded-3xl border border-white/15 bg-white/10 p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/65">Mode</p>
-                <p className="mt-3 text-lg font-semibold">Grounded answers first</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  Responses prioritize retrieved corpus material and explicitly flag uncertainty.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-white/15 bg-white/10 p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/65">Best for</p>
-                <p className="mt-3 text-lg font-semibold">Triage, evidence, and action plans</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  Use it for first-step strategy, not for pretending the model has seen facts it has not.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-white/15 bg-white/10 p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/65">Output</p>
-                <p className="mt-3 text-lg font-semibold">Structured legal guidance</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  Situation summary, rights position, next steps, evidence checklist, and a grounding note.
-                </p>
-              </div>
+          {/* Feature chips row */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="font-medium">Gemini answers + legal retrieval</span>
+            </div>
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <MessageSquare className="h-4 w-4 text-primary" />
+              <span className="font-medium">Thread history</span>
+            </div>
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <Download className="h-4 w-4 text-primary" />
+              <span className="font-medium">JSON export</span>
             </div>
           </div>
         </section>
+
+        {/* Subtle divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
         <section className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
           <div className="space-y-6">
@@ -469,7 +456,7 @@ export function AssistantWorkspace({
                         <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.18em]">
                           {message.role === "assistant" ? (
                             <>
-                              <Scale className="h-4 w-4" />
+                              <Image src="/legalease.png" alt="LegalEase" width={20} height={20} className="rounded-md object-contain" />
                               LegalEase
                             </>
                           ) : (

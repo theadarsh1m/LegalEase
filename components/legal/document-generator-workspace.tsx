@@ -128,61 +128,43 @@ export function DocumentGeneratorWorkspace({ initialTemplateId }: DocumentGenera
   return (
     <main className="page-section">
       <div className="container-shell space-y-8">
-        <section className="glass-panel overflow-hidden border-white/70 bg-[linear-gradient(135deg,rgba(64,40,20,0.98),rgba(18,76,66,0.94))] p-8 text-white md:p-10">
-          <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/80">
-                <FileText className="h-4 w-4" />
+        {/* ── Page Header: open layout ── */}
+        <section>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                <FileText className="h-3.5 w-3.5" />
                 FIR, RTI, notice, and complaint drafting
               </div>
-              <h1 className="mt-5 max-w-4xl font-display text-5xl font-semibold leading-[1.02] md:text-6xl">
+              <h1 className="mt-5 font-display text-4xl font-semibold leading-tight sm:text-5xl">
                 Generate cleaner first-pass legal drafts without inventing facts.
               </h1>
-              <p className="mt-4 max-w-2xl text-base leading-8 text-white/78 md:text-lg">
+              <p className="mt-4 text-base leading-7 text-muted-foreground md:text-lg">
                 Pick a document type, enter only the facts you know, and get a structured draft designed for review and
-                refinement. The prompts are tuned to stay factual and leave uncertainty visible instead of guessing.
+                refinement. The prompts are tuned to stay factual and leave uncertainty visible.
               </p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Badge className="border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/10" variant="outline">
-                  FIR / police complaint
-                </Badge>
-                <Badge className="border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/10" variant="outline">
-                  RTI request
-                </Badge>
-                <Badge className="border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/10" variant="outline">
-                  Legal notice
-                </Badge>
-                <Badge className="border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/10" variant="outline">
-                  Workplace complaint
-                </Badge>
-              </div>
             </div>
+          </div>
 
-            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
-              <div className="rounded-3xl border border-white/15 bg-white/10 p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/65">Drafting rule</p>
-                <p className="mt-3 text-lg font-semibold">Facts first</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  The generator is instructed not to invent sections, addresses, dates, or case numbers.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-white/15 bg-white/10 p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/65">Output</p>
-                <p className="mt-3 text-lg font-semibold">Structured formal draft</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  Each result ends with a short checklist of things the user should verify before sending.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-white/15 bg-white/10 p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/65">Handoff</p>
-                <p className="mt-3 text-lg font-semibold">Guidance and drafting stay connected</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  If the facts are still messy, move into the assistant first and come back with a cleaner timeline.
-                </p>
-              </div>
+          {/* Feature chips row */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <span className="font-medium">FIR / police complaint</span>
+            </div>
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <span className="font-medium">RTI request</span>
+            </div>
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <span className="font-medium">Legal notice</span>
+            </div>
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <span className="font-medium">Workplace complaint</span>
             </div>
           </div>
         </section>
+
+        {/* Subtle divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
         <section className="grid gap-6 xl:grid-cols-[0.56fr_0.44fr]">
           <div className="space-y-6">

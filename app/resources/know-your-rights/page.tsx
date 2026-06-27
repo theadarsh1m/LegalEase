@@ -13,56 +13,39 @@ export default function KnowYourRightsPage() {
   return (
     <main className="page-section">
       <div className="container-shell space-y-8">
-        <section className="glass-panel overflow-hidden border-white/70 bg-[linear-gradient(135deg,rgba(16,73,88,0.98),rgba(29,59,30,0.95))] p-8 text-white md:p-10">
-          <div className="grid gap-8 xl:grid-cols-[1.08fr_0.92fr]">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/80">
-                <ShieldCheck className="h-4 w-4" />
+        {/* ── Page Header: open layout ── */}
+        <section>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                <ShieldCheck className="h-3.5 w-3.5" />
                 Know your rights
               </div>
-              <h1 className="mt-5 max-w-4xl font-display text-5xl font-semibold leading-[1.02] md:text-6xl">
+              <h1 className="mt-5 font-display text-4xl font-semibold leading-tight sm:text-5xl">
                 Read the law, open the source files, and ask questions beside them.
               </h1>
-              <p className="mt-4 max-w-2xl text-base leading-8 text-white/78 md:text-lg">
-                This section restores the dedicated rights library. Users can browse rights by category, open the actual
-                PDF-backed files, and launch an AI explanation flow for any right they do not fully understand.
+              <p className="mt-4 text-base leading-7 text-muted-foreground md:text-lg">
+                Browse rights by category, open the actual PDF-backed files, and launch an AI explanation flow
+                for any right you do not fully understand.
               </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button asChild size="lg">
-                  <Link href="/tools/legal-assistant?prompt=Help me understand my rights in a legal situation and what evidence I should preserve first.">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Ask rights assistant
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white"
-                >
-                  <Link href="/resources/legal-library">Open legal library</Link>
-                </Button>
-              </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-3xl border border-white/15 bg-white/10 p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/65">What users can do</p>
-                <p className="mt-3 text-lg font-semibold">Read the source files</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  Open PDF-backed rights documents directly instead of losing them behind redirects.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-white/15 bg-white/10 p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/65">AI help</p>
-                <p className="mt-3 text-lg font-semibold">Explain rights and doubts</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  Launch a prefilled assistant prompt from each right to understand protections, violations, and next steps.
-                </p>
-              </div>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild className="rounded-full px-6 shadow-md shadow-emerald-900/10">
+                <Link href="/tools/legal-assistant?prompt=Help me understand my rights in a legal situation and what evidence I should preserve first.">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Ask rights assistant
+                </Link>
+              </Button>
+              <Button variant="outline" asChild className="rounded-full px-6">
+                <Link href="/resources/legal-library">Open legal library</Link>
+              </Button>
             </div>
           </div>
         </section>
+
+        {/* Subtle divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
         <SearchSection />
 

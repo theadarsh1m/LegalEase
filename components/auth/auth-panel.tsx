@@ -198,12 +198,12 @@ export function AuthPanel({ mode, nextPath = "/workspace" }: AuthPanelProps) {
     <div className="page-section">
       <div className="container-shell">
         <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="glass-panel p-8 md:p-10">
-            <div className="inline-flex items-center gap-3 rounded-full border border-emerald-900/10 bg-emerald-950 px-4 py-2 text-sm text-white">
-              <Scale className="h-4 w-4" />
+          <div className="flex flex-col justify-center">
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+              <Scale className="h-3.5 w-3.5" />
               Secure Firebase-authenticated workspace
             </div>
-            <h1 className="mt-6 max-w-xl font-display text-5xl font-semibold leading-tight text-foreground md:text-6xl">
+            <h1 className="mt-6 max-w-xl font-display text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
               {mode === "login"
                 ? "Resume your matters without losing context."
                 : mode === "signup"
@@ -214,18 +214,12 @@ export function AuthPanel({ mode, nextPath = "/workspace" }: AuthPanelProps) {
               LegalEase combines persistent sessions, document storage, AI analysis, and retrieval-grounded legal
               workflows so your work does not reset every time you leave the page.
             </p>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/80 bg-white/70 p-5">
-                <p className="text-sm font-semibold text-foreground">Persistent workspace</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Save conversations, uploaded documents, and important profile details under one account.
-                </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+                <span className="font-medium">Persistent workspace</span>
               </div>
-              <div className="rounded-2xl border border-white/80 bg-white/70 p-5">
-                <p className="text-sm font-semibold text-foreground">Simple secure access</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Use email-password or Google sign-in without breaking the secure server session.
-                </p>
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+                <span className="font-medium">Simple secure access</span>
               </div>
             </div>
           </div>
@@ -331,10 +325,6 @@ export function AuthPanel({ mode, nextPath = "/workspace" }: AuthPanelProps) {
                     By continuing you agree to the platform terms and acknowledge that LegalEase provides general legal
                     information, not representation.
                   </p>
-                  <div className="rounded-2xl border border-emerald-900/10 bg-emerald-50/70 p-4 text-sm text-emerald-950">
-                    Phone-number OTP sign-in has been removed. Account access is now handled through email-password and
-                    Google only.
-                  </div>
                 </form>
               )}
 

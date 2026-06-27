@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useRef, useState } from "react"
+import Image from "next/image"
 import {
   Download,
   FileText,
@@ -332,58 +333,43 @@ export function DocumentSimplifierWorkspace() {
   return (
     <main className="page-section">
       <div className="container-shell space-y-8">
-        <section className="glass-panel overflow-hidden border-white/70 bg-[linear-gradient(135deg,rgba(28,62,80,0.98),rgba(22,31,56,0.96))] p-8 text-white md:p-10">
-          <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/80">
-                <Sparkles className="h-4 w-4" />
+        {/* ── Page Header: open layout, no box ── */}
+        <section>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                <Sparkles className="h-3.5 w-3.5" />
                 Document chat for legal files
               </div>
-              <h1 className="mt-5 max-w-4xl font-display text-5xl font-semibold leading-[1.02] md:text-6xl">
+              <h1 className="mt-5 font-display text-4xl font-semibold leading-tight sm:text-5xl">
                 Upload legal documents, generate a clear brief, then keep asking questions.
               </h1>
-              <p className="mt-4 max-w-2xl text-base leading-8 text-white/78 md:text-lg">
-                This workspace supports PDF, DOCX, text, JSON, and markdown inputs. It can produce a saved plain-language
-                summary and continue with grounded follow-up answers like a document-aware legal copilot.
+              <p className="mt-4 text-base leading-7 text-muted-foreground md:text-lg">
+                Supports PDF, DOCX, text, JSON, and markdown inputs. Produces a saved plain-language
+                summary and continues with grounded follow-up answers.
               </p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Badge className="border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/10" variant="outline">
-                  Multi-file upload
-                </Badge>
-                <Badge className="border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/10" variant="outline">
-                  Summary + follow-up chat
-                </Badge>
-                <Badge className="border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/10" variant="outline">
-                  JSON transcript export
-                </Badge>
-              </div>
             </div>
+          </div>
 
-            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
-              <div className="rounded-3xl border border-white/15 bg-white/10 p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/65">Grounding</p>
-                <p className="mt-3 text-lg font-semibold">Document text first</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  Answers stay tied to what the uploaded or pasted documents actually show.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-white/15 bg-white/10 p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/65">Output</p>
-                <p className="mt-3 text-lg font-semibold">Readable brief and action points</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  Generate a summary first, then ask about deadlines, risks, missing records, and next steps.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-white/15 bg-white/10 p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/65">Export</p>
-                <p className="mt-3 text-lg font-semibold">Share the session safely</p>
-                <p className="mt-2 text-sm leading-6 text-white/75">
-                  Download the document list and transcript as JSON for reuse or escalation.
-                </p>
-              </div>
+          {/* Feature chips row */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <FileText className="h-4 w-4 text-primary" />
+              <span className="font-medium">Multi-file upload</span>
+            </div>
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="font-medium">Summary + follow-up chat</span>
+            </div>
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <Download className="h-4 w-4 text-primary" />
+              <span className="font-medium">JSON transcript export</span>
             </div>
           </div>
         </section>
+
+        {/* Subtle divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
         <section className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
           <div className="space-y-6">
@@ -519,7 +505,7 @@ export function DocumentSimplifierWorkspace() {
                         <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.18em]">
                           {message.role === "assistant" ? (
                             <>
-                              <Sparkles className="h-4 w-4" />
+                              <Image src="/legalease.png" alt="LegalEase" width={20} height={20} className="rounded-md object-contain" />
                               LegalEase
                             </>
                           ) : (

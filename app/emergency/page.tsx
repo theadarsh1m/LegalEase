@@ -27,21 +27,25 @@ export default function EmergencyPage() {
   return (
     <main className="page-section">
       <div className="container-shell space-y-8">
-        <section className="glass-panel overflow-hidden bg-[linear-gradient(135deg,rgba(101,17,17,0.97),rgba(65,24,13,0.95))] p-8 text-white md:p-10">
-          <div className="max-w-4xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/80">
-              <AlertTriangle className="h-4 w-4" />
+        {/* ── Page Header: open layout ── */}
+        <section>
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-red-700">
+              <AlertTriangle className="h-3.5 w-3.5" />
               Emergency-first legal guidance
             </div>
-            <h1 className="mt-6 font-display text-5xl font-semibold leading-tight md:text-6xl">
+            <h1 className="mt-5 font-display text-4xl font-semibold leading-tight sm:text-5xl">
               Use this page when the legal problem is also a safety problem.
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-white/80 md:text-lg">
+            <p className="mt-4 text-base leading-7 text-muted-foreground md:text-lg">
               If someone is in immediate danger, use emergency response channels first. LegalEase can help frame the next
               legal steps after the urgent risk is contained.
             </p>
           </div>
         </section>
+
+        {/* Subtle divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-red-200 to-transparent" />
 
         <section className="grid gap-6 md:grid-cols-3">
           {emergencyScenarios.map((scenario) => (

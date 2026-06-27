@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, BookOpenText, FileText, MessageSquare, ShieldCheck } from "lucide-react"
+import { ArrowRight, BookOpenText, Database, FileText, MessageSquare, Server, ShieldCheck, Sparkles } from "lucide-react"
 import { requireSessionUser } from "@/lib/auth"
 import { getUserProfile, listUserArtifacts, listUserConversations, listUserDocuments, upsertUserProfile } from "@/lib/db"
 import { getLocalKnowledgeBaseStatus } from "@/lib/rag/retrieval"
@@ -34,147 +34,166 @@ export default async function WorkspacePage() {
   ])
 
   const setup = getSetupSummary()
+  const firstName = (profile.name || user.name)?.split(" ")[0]
 
   return (
     <main className="page-section">
-      <div className="container-shell space-y-8">
-        <section className="glass-panel overflow-hidden p-8 md:p-10">
-          <div className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr]">
-            <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Workspace</p>
-              <h1 className="mt-4 font-display text-5xl font-semibold leading-tight md:text-6xl">
-                {(profile.name || user.name) ? `Welcome back, ${(profile.name || user.name)?.split(" ")[0]}.` : "Welcome back."}
-              </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-                Your account is connected to a persistent workspace for assistant sessions, source-backed answers, and
-                saved document outputs.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button asChild>
-                  <Link href="/tools/legal-assistant">
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Open assistant
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/tools/document-simplifier">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Open document chat
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/tools/document-generator">
-                    <BookOpenText className="mr-2 h-4 w-4" />
-                    Open draft studio
-                  </Link>
-                </Button>
+      <div className="container-shell space-y-10">
+        {/* ── Hero: open layout, no box ── */}
+        <section>
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                <Sparkles className="h-3.5 w-3.5" />
+                Workspace
               </div>
+              <h1 className="mt-5 font-display text-4xl font-semibold leading-tight sm:text-5xl md:text-6xl">
+                {firstName ? `Welcome back, ${firstName}.` : "Welcome back."}
+              </h1>
+              <p className="mt-4 text-base leading-7 text-muted-foreground md:text-lg">
+                Your persistent workspace for assistant sessions, source-backed answers, and saved document outputs.
+              </p>
             </div>
 
-            <div className="grid gap-4">
-              <Card className="border-white/80 bg-white/80">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Knowledge mode</CardTitle>
-                  <CardDescription>RAG operating source for Gemini answers</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-1 text-sm text-muted-foreground">
-                  <p className="font-medium uppercase tracking-[0.22em] text-primary">{knowledgeStatus.mode}</p>
-                  <p>{knowledgeStatus.chunkCount} searchable chunks available.</p>
-                </CardContent>
-              </Card>
+            {/* Quick actions */}
+            <div className="flex flex-wrap gap-3">
+              <Button asChild className="rounded-full px-6 shadow-md shadow-emerald-900/10">
+                <Link href="/tools/legal-assistant">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Assistant
+                </Link>
+              </Button>
+              <Button variant="outline" asChild className="rounded-full px-6">
+                <Link href="/tools/document-simplifier">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Document chat
+                </Link>
+              </Button>
+              <Button variant="outline" asChild className="rounded-full px-6">
+                <Link href="/tools/document-generator">
+                  <BookOpenText className="mr-2 h-4 w-4" />
+                  Draft studio
+                </Link>
+              </Button>
+            </div>
+          </div>
 
-              <Card className="border-white/80 bg-white/80">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Setup status</CardTitle>
-                  <CardDescription>Environment readiness for full-stack features</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-muted-foreground">
-                  <p>Gemini: {setup.hasGeminiConfig ? "configured" : "missing env"}</p>
-                  <p>Firebase client: {setup.hasFirebaseClientConfig ? "configured" : "missing env"}</p>
-                  <p>Firebase admin: {setup.hasFirebaseAdminConfig ? "configured" : "missing env"}</p>
-                  <p>MongoDB: {setup.hasMongoConfig ? "configured" : "missing env"}</p>
-                  <p>Session secret: {setup.hasSessionSecret ? "configured" : "missing env"}</p>
-                  <p>Cloudinary: {setup.hasCloudinaryConfig ? "configured" : "missing env"}</p>
-                </CardContent>
-              </Card>
+          {/* Stat chips row */}
+          <div className="mt-8 flex flex-wrap gap-3">
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <Database className="h-4 w-4 text-primary" />
+              <span className="font-medium text-primary">{knowledgeStatus.mode}</span>
+              <span className="text-muted-foreground">· {knowledgeStatus.chunkCount} chunks</span>
+            </div>
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
+              <Server className="h-4 w-4 text-primary" />
+              <span className="font-medium">Gemini</span>
+              <span className={setup.hasGeminiConfig ? "text-emerald-600" : "text-red-500"}>
+                {setup.hasGeminiConfig ? "✓" : "✗"}
+              </span>
+              <span className="text-muted-foreground/50">|</span>
+              <span className="font-medium">Firebase</span>
+              <span className={setup.hasFirebaseClientConfig ? "text-emerald-600" : "text-red-500"}>
+                {setup.hasFirebaseClientConfig ? "✓" : "✗"}
+              </span>
+              <span className="text-muted-foreground/50">|</span>
+              <span className="font-medium">MongoDB</span>
+              <span className={setup.hasMongoConfig ? "text-emerald-600" : "text-red-500"}>
+                {setup.hasMongoConfig ? "✓" : "✗"}
+              </span>
             </div>
           </div>
         </section>
 
+        {/* Subtle divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+        {/* ── Two-column content ── */}
         <section className="grid gap-6 lg:grid-cols-2">
-          <Card className="glass-panel border-white/70">
-            <CardHeader>
-              <CardTitle>Recent conversations</CardTitle>
-              <CardDescription>Saved assistant threads linked to your account.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {conversations.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No saved conversations yet. Start with the legal assistant.</p>
-              ) : (
-                conversations.map((conversation) => (
-                  <div key={conversation.id} className="rounded-2xl border border-white/80 bg-white/80 p-4">
+          {/* Recent conversations */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-2xl font-semibold">Recent conversations</h2>
+              <Link href="/tools/legal-assistant" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                View all <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <p className="text-sm text-muted-foreground">Saved assistant threads linked to your account.</p>
+
+            {conversations.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border/60 bg-white/40 p-8 text-center">
+                <MessageSquare className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                <p className="mt-3 text-sm text-muted-foreground">No saved conversations yet.</p>
+                <Button asChild variant="outline" size="sm" className="mt-4 rounded-full">
+                  <Link href="/tools/legal-assistant">Start your first conversation</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {conversations.map((conversation) => (
+                  <div key={conversation.id} className="rounded-2xl border border-white/80 bg-white/60 p-4 backdrop-blur-sm transition hover:bg-white/80">
                     <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-medium text-foreground">{conversation.title}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{conversation.preview}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-foreground">{conversation.title}</p>
+                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{conversation.preview}</p>
                       </div>
-                      <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      <span className="shrink-0 rounded-full bg-primary/8 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-primary">
                         {conversation.urgency}
                       </span>
                     </div>
                     <p className="mt-3 text-xs text-muted-foreground">Updated {formatDate(conversation.updatedAt)}</p>
                   </div>
-                ))
-              )}
+                ))}
+              </div>
+            )}
+          </div>
 
-              <Button variant="ghost" asChild className="w-full justify-between">
-                <Link href="/tools/legal-assistant">
-                  Go to legal assistant
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Saved outputs */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-2xl font-semibold">Saved outputs</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">Generated drafts and simplified document results.</p>
 
-          <Card className="glass-panel border-white/70">
-            <CardHeader>
-              <CardTitle>Saved outputs</CardTitle>
-              <CardDescription>Generated drafts and simplified document results.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {artifacts.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No saved outputs yet. Use the document tools to create and store artifacts.
-                </p>
-              ) : (
-                artifacts.map((artifact) => (
-                  <div key={artifact.id} className="rounded-2xl border border-white/80 bg-white/80 p-4">
+            {artifacts.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border/60 bg-white/40 p-8 text-center">
+                <FileText className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                <p className="mt-3 text-sm text-muted-foreground">No saved outputs yet.</p>
+                <Button asChild variant="outline" size="sm" className="mt-4 rounded-full">
+                  <Link href="/tools/document-simplifier">Create your first document</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {artifacts.map((artifact) => (
+                  <div key={artifact.id} className="rounded-2xl border border-white/80 bg-white/60 p-4 backdrop-blur-sm transition hover:bg-white/80">
                     <div className="flex items-center justify-between gap-4">
-                      <p className="font-medium text-foreground">{artifact.title}</p>
-                      <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{artifact.kind}</span>
+                      <p className="truncate font-medium text-foreground">{artifact.title}</p>
+                      <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-800">
+                        {artifact.kind}
+                      </span>
                     </div>
-                    <p className="mt-2 text-sm text-muted-foreground">{artifact.preview}</p>
+                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{artifact.preview}</p>
                     <p className="mt-3 text-xs text-muted-foreground">Saved {formatDate(artifact.updatedAt)}</p>
                   </div>
-                ))
-              )}
-
-              <div className="rounded-2xl border border-emerald-900/10 bg-emerald-950/95 p-5 text-white">
-                <div className="flex items-start gap-3">
-                  <ShieldCheck className="mt-0.5 h-5 w-5" />
-                  <div>
-                    <p className="font-medium">Workspace note</p>
-                    <p className="mt-1 text-sm text-white/80">
-                      Assistant answers are grounded in the platform corpus, but matter-specific legal action should still
-                      be validated by a licensed advocate.
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
-            </CardContent>
-          </Card>
+            )}
+
+            {/* Disclaimer chip */}
+            <div className="flex items-start gap-3 rounded-2xl border border-primary/10 bg-primary/5 p-4">
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <p className="text-sm leading-6 text-muted-foreground">
+                Assistant answers are grounded in the platform corpus, but matter-specific legal action should still be validated by a licensed advocate.
+              </p>
+            </div>
+          </div>
         </section>
 
+        {/* Subtle divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+        {/* ── Profile & Vault ── */}
         <section className="grid gap-6 xl:grid-cols-[0.52fr_0.48fr]">
           <ProfileSettingsCard initialProfile={profile} />
           <DocumentVaultCard initialDocuments={documents} />
