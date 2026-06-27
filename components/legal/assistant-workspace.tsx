@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useRef } from "react"
 import {
   BookOpenText,
   Download,
@@ -10,11 +10,14 @@ import {
   Loader2,
   MessageSquare,
   MessageSquareQuote,
+  Mic,
   Plus,
   Scale,
   Send,
   ShieldCheck,
   Sparkles,
+  Volume2,
+  VolumeX,
 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { Badge } from "@/components/ui/badge"
@@ -130,6 +133,48 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
+function renderFormattedContent(content: string) {
+  const lines = content.split("\n")
+  return lines.map((line, lineIdx) => {
+    let isHeader = false
+    let headerText = ""
+    if (line.startsWith("### ")) {
+      isHeader = true
+      headerText = line.slice(4)
+    } else if (line.startsWith("## ")) {
+      isHeader = true
+      headerText = line.slice(3)
+    } else if (line.startsWith("# ")) {
+      isHeader = true
+      headerText = line.slice(2)
+    }
+
+    const parseBold = (text: string) => {
+      const parts = text.split(/(\*\*[^*]+\*\*)/g)
+      return parts.map((part, partIdx) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return <strong key={partIdx} className="font-bold text-foreground">{part.slice(2, -2)}</strong>
+        }
+        return part
+      })
+    }
+
+    if (isHeader) {
+      return (
+        <h4 key={lineIdx} className="text-sm font-bold text-foreground mt-2 mb-1 block">
+          {parseBold(headerText)}
+        </h4>
+      )
+    }
+
+    return (
+      <span key={lineIdx} className="block min-h-[1.2em]">
+        {parseBold(line)}
+      </span>
+    )
+  })
+}
+
 export function AssistantWorkspace({
   initialConversations,
   initialPrompt,
@@ -145,6 +190,109 @@ export function AssistantWorkspace({
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingConversation, setIsLoadingConversation] = useState(false)
   const [messages, setMessages] = useState<AssistantMessage[]>([buildIntroMessage(initialPrompt)])
+  const [isListening, setIsListening] = useState(false)
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null)
+  const recognitionRef = useRef<any>(null)
+
+  function startSpeechToText() {
+    if (typeof window === "undefined") return
+
+    if (isListening) {
+      recognitionRef.current?.stop()
+      return
+    }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+
+    if (!SpeechRecognition) {
+      toast({
+        title: "Voice typing not supported",
+        description: "Your browser does not support voice input. Try Google Chrome or Microsoft Edge.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognitionRef.current = recognition
+    recognition.lang = "en-IN"
+    recognition.interimResults = false
+    recognition.maxAlternatives = 1
+    recognition.continuous = false
+
+    recognition.onstart = () => {
+      setIsListening(true)
+    }
+
+    recognition.onerror = (event: any) => {
+      setIsListening(false)
+      if (event.error === "network") {
+        console.warn("Speech Recognition Network Error:", event.error)
+        toast({
+          title: "Voice connection error",
+          description: "Embedded browser previews lack speech API keys. Please open this app in an external Google Chrome or Microsoft Edge browser to use voice typing.",
+          variant: "destructive",
+        })
+      } else if (event.error !== "no-speech") {
+        console.warn("Speech Recognition Error:", event.error)
+        toast({
+          title: "Voice typing error",
+          description: `Failed: ${event.error}. Please check your browser microphone permission settings.`,
+          variant: "destructive",
+        })
+      }
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+    }
+
+    recognition.onresult = (event: any) => {
+      const speechToText = event.results[0][0].transcript
+      if (speechToText) {
+        setQuery((current) => (current ? `${current} ${speechToText}`.trim() : speechToText))
+      }
+    }
+
+    try {
+      recognition.start()
+    } catch (err) {
+      console.error("Speech start error:", err)
+      setIsListening(false)
+    }
+  }
+
+  function handleSpeak(msgId: string, content: string) {
+    if (typeof window === "undefined") return
+
+    if (speakingMsgId === msgId) {
+      window.speechSynthesis.cancel()
+      setSpeakingMsgId(null)
+      return
+    }
+
+    window.speechSynthesis.cancel()
+
+    // Strip markdown formatting characters to avoid speaking them
+    const cleanText = content
+      .replace(/[\*\_#`~]/g, "") // remove formatting characters
+      .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1") // replace markdown links with their label
+      .trim()
+
+    const utterance = new SpeechSynthesisUtterance(cleanText)
+    utterance.lang = "en-IN"
+
+    utterance.onend = () => {
+      setSpeakingMsgId((current) => (current === msgId ? null : current))
+    }
+    utterance.onerror = () => {
+      setSpeakingMsgId((current) => (current === msgId ? null : current))
+    }
+
+    setSpeakingMsgId(msgId)
+    window.speechSynthesis.speak(utterance)
+  }
 
   const latestAssistantSources = useMemo(() => {
     return [...messages].reverse().find((message) => message.role === "assistant" && message.sources?.length)?.sources ?? []
@@ -459,7 +607,25 @@ export function AssistantWorkspace({
                               ? "bg-emerald-950 text-white rounded-tr-none"
                               : "bg-white/80 border border-border/80 text-foreground/90 rounded-tl-none"
                           }`}>
-                            <p className="whitespace-pre-line">{message.content}</p>
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="flex-1 space-y-1">{renderFormattedContent(message.content)}</div>
+                              <button
+                                onClick={() => handleSpeak(message.id, message.content)}
+                                type="button"
+                                className={`rounded-full p-1 transition shrink-0 ${
+                                  message.role === "user"
+                                    ? "text-emerald-300 hover:text-emerald-100 hover:bg-white/10"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-black/5"
+                                }`}
+                                title="Listen to this message"
+                              >
+                                {speakingMsgId === message.id ? (
+                                  <VolumeX className="h-3.5 w-3.5 animate-pulse" />
+                                ) : (
+                                  <Volume2 className="h-3.5 w-3.5" />
+                                )}
+                              </button>
+                            </div>
 
                             {/* Source cards in assistant response */}
                             {message.role === "assistant" && message.sources?.length ? (
@@ -561,7 +727,11 @@ export function AssistantWorkspace({
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className="hidden text-[10px] text-muted-foreground/70 sm:inline">
+                      <span className="hidden text-[10px] text-muted-foreground/60 sm:inline">
+                        Dictation: Win+H (Win) · Double Fn (Mac)
+                      </span>
+                      <span className="hidden text-[10px] text-muted-foreground/30 sm:inline">|</span>
+                      <span className="hidden text-[10px] text-muted-foreground/60 sm:inline">
                         Shift+Enter for new line
                       </span>
                       <Button

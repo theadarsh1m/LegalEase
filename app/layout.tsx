@@ -23,6 +23,11 @@ export const metadata: Metadata = {
   title: "LegalEase",
   description:
     "LegalEase is an AI-assisted legal guidance platform with Gemini-powered retrieval, Firebase authentication, and working document workflows.",
+  icons: {
+    icon: "/legalease.png",
+    shortcut: "/legalease.png",
+    apple: "/legalease.png",
+  },
 }
 
 export default function RootLayout({

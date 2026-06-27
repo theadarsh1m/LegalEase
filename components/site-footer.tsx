@@ -20,6 +20,15 @@ const footerGroups = [
       { href: "/resources/directory", label: "Aid directory" },
     ],
   },
+  {
+    title: "Contribute & Socials",
+    links: [
+      { href: "https://github.com/theadarsh1m/LegalEase", label: "GitHub Repo", external: true },
+      { href: "https://theadarsh.me/", label: "Portfolio", external: true },
+      { href: "https://github.com/theadarsh1m", label: "GitHub Profile", external: true },
+      { href: "https://www.linkedin.com/in/adarshsachan01", label: "LinkedIn", external: true },
+    ],
+  },
 ]
 
 export function SiteFooter() {
@@ -43,7 +52,12 @@ export function SiteFooter() {
               <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{group.title}</p>
               <div className="mt-4 flex flex-col gap-3">
                 {group.links.map((link) => (
-                  <Link key={link.href} href={link.href} className="text-sm text-foreground/80 transition hover:text-foreground">
+                  <Link 
+                    key={link.href} 
+                    href={link.href} 
+                    className="text-sm text-foreground/80 transition hover:text-foreground"
+                    {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  >
                     {link.label}
                   </Link>
                 ))}
@@ -58,7 +72,15 @@ export function SiteFooter() {
             advocate reviewing the exact facts of a matter.
           </p>
           <p className="font-medium flex-shrink-0">
-            Made with love by The Adarsh
+            Made with love by{" "}
+            <a 
+              href="https://theadarsh.me/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="underline hover:text-foreground transition"
+            >
+              The Adarsh
+            </a>
           </p>
         </div>
       </div>
