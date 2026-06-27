@@ -8,6 +8,8 @@ function normalizeExtractedText(value: string) {
   return value.replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim()
 }
 
+// ── PDF text extraction via child process ──
+
 function extractPdfText(buffer: Buffer): string {
   const tmpPath = path.join(os.tmpdir(), `legalease-pdf-${Date.now()}.pdf`)
   fs.writeFileSync(tmpPath, buffer)
@@ -25,6 +27,25 @@ function extractPdfText(buffer: Buffer): string {
   }
 }
 
+// ── OCR via Tesseract.js (free, local, no API keys) ──
+
+function ocrImage(buffer: Buffer, extension: string): string {
+  const tmpPath = path.join(os.tmpdir(), `legalease-ocr-${Date.now()}${extension}`)
+  fs.writeFileSync(tmpPath, buffer)
+
+  try {
+    const scriptPath = path.join(process.cwd(), "scripts", "ocr-image.cjs")
+    const result = execFileSync("node", [scriptPath, tmpPath], {
+      encoding: "utf-8",
+      maxBuffer: 50 * 1024 * 1024,
+      timeout: 60_000, // OCR can take a bit longer
+    })
+    return result
+  } finally {
+    try { fs.unlinkSync(tmpPath) } catch {}
+  }
+}
+
 // ── Format detection helpers ──
 
 const PDF_EXTENSIONS = [".pdf"]
@@ -32,6 +53,7 @@ const PLAIN_TEXT_EXTENSIONS = [".txt", ".md", ".json", ".csv", ".log", ".xml", "
 const DOCX_EXTENSIONS = [".docx"]
 const DOC_EXTENSIONS = [".doc"]
 const RTF_EXTENSIONS = [".rtf"]
+const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tiff", ".tif"]
 
 function isPdf(file: File, lowerName: string) {
   return file.type === "application/pdf" || PDF_EXTENSIONS.some((ext) => lowerName.endsWith(ext))
@@ -66,10 +88,21 @@ function isRtf(file: File, lowerName: string) {
   )
 }
 
+function isImage(file: File, lowerName: string) {
+  return (
+    file.type.startsWith("image/") ||
+    IMAGE_EXTENSIONS.some((ext) => lowerName.endsWith(ext))
+  )
+}
+
+function getExtension(lowerName: string): string {
+  const dot = lowerName.lastIndexOf(".")
+  return dot >= 0 ? lowerName.slice(dot) : ".bin"
+}
+
 // ── RTF text extraction (no external dependency) ──
 
 function extractRtfText(raw: string): string {
-  // Strip RTF control words and groups, extract plain text
   let depth = 0
   let result = ""
   let i = 0
@@ -83,23 +116,19 @@ function extractRtfText(raw: string): string {
       i++
     } else if (ch === "\\") {
       i++
-      // Read control word
       let word = ""
       while (i < raw.length && /[a-zA-Z]/.test(raw[i])) {
         word += raw[i]
         i++
       }
-      // Skip optional numeric parameter
       if (i < raw.length && /[-\d]/.test(raw[i])) {
         while (i < raw.length && /[\d]/.test(raw[i])) i++
       }
-      // Skip single trailing space
       if (i < raw.length && raw[i] === " ") i++
 
       if (word === "par" || word === "line") result += "\n"
       else if (word === "tab") result += "\t"
       else if (ch === "\\") {
-        // Escaped character like \\ \{ \}
         if (raw[i] === "\\" || raw[i] === "{" || raw[i] === "}") {
           result += raw[i]
           i++
@@ -113,14 +142,13 @@ function extractRtfText(raw: string): string {
   return result
 }
 
-// ── .doc extraction via mammoth (best-effort, works for many .doc files) ──
+// ── .doc extraction via mammoth (best-effort) ──
 
 async function extractDocText(buffer: Buffer): Promise<string> {
   try {
     const result = await mammoth.extractRawText({ buffer })
     return result.value
   } catch {
-    // mammoth can fail on older binary .doc formats
     return ""
   }
 }
@@ -130,11 +158,25 @@ async function extractDocText(buffer: Buffer): Promise<string> {
 export async function extractDocumentTextFromFile(file: File) {
   const lowerName = file.name.toLowerCase()
 
-  // PDF
+  // PDF — try text extraction first, fall back to OCR if empty (scanned PDF)
   if (isPdf(file, lowerName)) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    const text = extractPdfText(buffer)
+    let text = extractPdfText(buffer)
+    text = normalizeExtractedText(text)
+
+    // If pdf-parse found very little text, it's likely a scanned/image-based PDF
+    // Note: Tesseract works on images, not PDFs directly — so for scanned PDFs
+    // we return whatever pdf-parse found (even if minimal)
+    return text
+  }
+
+  // Images — OCR via Tesseract.js (free, runs locally)
+  if (isImage(file, lowerName)) {
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    const ext = getExtension(lowerName)
+    const text = ocrImage(buffer, ext)
     return normalizeExtractedText(text)
   }
 

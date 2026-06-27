@@ -394,7 +394,7 @@ export function DocumentSimplifierWorkspace() {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".pdf,.txt,.md,.json,.csv,.docx,.doc,.rtf,.xml,.html,.htm,.yaml,.yml,.log,.py,.js,.ts,.jsx,.tsx,.css,.sql,.java,.go,.rs,.c,.cpp"
+                      accept=".pdf,.txt,.md,.json,.csv,.docx,.doc,.rtf,.xml,.html,.htm,.yaml,.yml,.log,.png,.jpg,.jpeg,.webp,.gif,.bmp,.tiff,.py,.js,.ts,.jsx,.tsx,.css,.sql,.java,.go,.rs,.c,.cpp"
                       multiple
                       className="hidden"
                       onChange={(event) => void handleFiles(event.target.files)}
