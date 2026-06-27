@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
-import { ArrowRight, Sparkles } from "lucide-react"
+import { ArrowRight, Sparkles, Phone, Compass } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import type { LegalAidResource } from "@/lib/legal/library"
@@ -38,66 +38,135 @@ export function DirectoryBrowser({ resources }: DirectoryBrowserProps) {
 
   return (
     <div className="space-y-6">
-      <div className="glass-panel p-6">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+      
+      {/* Search & Filter Header Panel */}
+      <div className="rounded-3xl border border-white bg-white/40 p-6 shadow-sm backdrop-blur-md space-y-4">
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by issue type, helpline, or service name"
+            placeholder="Search by issue type, helpline, or service name..."
+            className="h-11 rounded-2xl border-white bg-white/80 focus-visible:ring-emerald-500 shadow-none text-sm placeholder:text-muted-foreground/60"
           />
-          <div className="rounded-2xl border border-white/80 bg-white/80 px-4 py-3 text-sm text-muted-foreground">
-            {filtered.length} resource{filtered.length === 1 ? "" : "s"} found
+          <div className="inline-flex items-center rounded-2xl border border-white/80 bg-white/70 px-4 py-2.5 text-xs font-semibold text-muted-foreground">
+            {filtered.length} Resource{filtered.length === 1 ? "" : "s"} Found
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {categories.map((item) => (
-            <Button key={item} variant={item === category ? "default" : "outline"} onClick={() => setCategory(item)}>
-              {item}
-            </Button>
-          ))}
+
+        {/* Category Pills Row */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {categories.map((item) => {
+            const isActive = item === category
+            return (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setCategory(item)}
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide border transition-all ${
+                  isActive
+                    ? "bg-emerald-950 border-emerald-950 text-white shadow-sm"
+                    : "bg-white/60 border-white hover:border-emerald-200 hover:bg-white text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {item}
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Grid of Helpline / Aid resources */}
+      <div className="grid gap-6 md:grid-cols-2">
         {filtered.map((resource) => (
-          <article key={resource.id} className="glass-panel p-6">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{resource.category}</p>
-            <h3 className="mt-2 text-2xl font-semibold">{resource.name}</h3>
-            <p className="mt-3 text-sm leading-7 text-muted-foreground">{resource.notes}</p>
-            <div className="mt-5 rounded-3xl border border-white/80 bg-white/80 p-4 text-sm">
-              <p className="font-medium text-foreground">{resource.contactLabel}</p>
-              <p className="mt-1 text-muted-foreground">{resource.contactValue}</p>
-              <p className="mt-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">{resource.coverage}</p>
+          <article 
+            key={resource.id} 
+            className="group flex flex-col justify-between rounded-3xl border border-white bg-white/30 p-6 shadow-sm hover:shadow-md transition-all duration-300 backdrop-blur-sm hover:border-emerald-200"
+          >
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-800 bg-emerald-50/50 border border-emerald-100/50 px-2.5 py-1 rounded-full">
+                {resource.category}
+              </span>
+              <h3 className="mt-4 text-xl font-semibold text-neutral-900 group-hover:text-emerald-950 transition">
+                {resource.name}
+              </h3>
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                {resource.notes}
+              </p>
+
+              {/* Contact Details Information Box */}
+              <div className="mt-5 rounded-2xl border border-white/60 bg-white/60 p-4 shadow-inner space-y-2">
+                <div>
+                  <span className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground/60 block">
+                    Contact Channel
+                  </span>
+                  <span className="text-xs font-semibold text-foreground mt-0.5 block">
+                    {resource.contactLabel}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground/60 block">
+                    Helpline / Link
+                  </span>
+                  <span className="text-xs font-bold text-emerald-900 mt-0.5 block break-all font-mono">
+                    {resource.contactValue}
+                  </span>
+                </div>
+                <div className="pt-2 border-t border-border/20 flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60">
+                    Jurisdiction
+                  </span>
+                  <span className="text-[10px] font-semibold bg-white/70 px-2.5 py-0.5 rounded-full border border-white/80">
+                    {resource.coverage}
+                  </span>
+                </div>
+              </div>
             </div>
-            {resource.website ? (
-              <Button className="mt-5" asChild>
-                <Link href={resource.website} target="_blank" rel="noreferrer">
-                  Open resource
-                </Link>
-              </Button>
-            ) : null}
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button variant="outline" asChild>
-                <Link href={`/tools/legal-assistant?prompt=${encodeURIComponent(buildResourcePrompt(resource))}`}>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Ask AI how to use this
-                </Link>
-              </Button>
-              <Button variant="ghost" asChild>
+
+            {/* Action buttons footer */}
+            <div className="mt-6 pt-4 border-t border-border/20 space-y-2">
+              <div className="flex gap-2">
+                {resource.website ? (
+                  <Button 
+                    className="flex-1 rounded-xl text-xs h-8"
+                    asChild
+                  >
+                    <Link href={resource.website} target="_blank" rel="noreferrer">
+                      Visit Official Portal
+                    </Link>
+                  </Button>
+                ) : null}
+                <Button 
+                  variant="outline" 
+                  className="flex-1 rounded-xl text-xs h-8 border-white bg-white/40 hover:bg-white/85" 
+                  asChild
+                >
+                  <Link href={`/tools/legal-assistant?prompt=${encodeURIComponent(buildResourcePrompt(resource))}`}>
+                    <Sparkles className="mr-1.5 h-3.5 w-3.5 text-emerald-700" />
+                    Consult AI
+                  </Link>
+                </Button>
+              </div>
+              <Button 
+                variant="ghost" 
+                className="w-full rounded-xl text-[11px] h-7 hover:bg-black/5 text-muted-foreground hover:text-foreground justify-center"
+                asChild
+              >
                 <Link href="/tools/legal-assistant">
-                  Open assistant
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  Open AI Assistant
+                  <ArrowRight className="ml-1.5 h-3 w-3" />
                 </Link>
               </Button>
             </div>
           </article>
         ))}
 
+        {/* Empty state */}
         {filtered.length === 0 ? (
-          <div className="glass-panel p-8 text-center">
-            <p className="text-lg font-semibold text-foreground">No matching resources found.</p>
-            <p className="mt-2 text-sm leading-7 text-muted-foreground">
-              Try a broader keyword or use the legal assistant for guided help choosing the right channel.
+          <div className="col-span-full rounded-3xl border border-dashed border-neutral-300 p-10 text-center bg-white/20">
+            <Compass className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-sm font-semibold text-foreground">No matching resources found.</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground max-w-sm mx-auto">
+              Try search keywords like IPC, helpline, women aid, tenant, or consult the AI assistant.
             </p>
           </div>
         ) : null}

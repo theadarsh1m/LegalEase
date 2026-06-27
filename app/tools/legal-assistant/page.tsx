@@ -14,6 +14,7 @@ export default async function LegalAssistantPage({ searchParams }: LegalAssistan
   const promptValue = params?.prompt
   const issueValue = params?.issue
   const urgencyValue = params?.urgency
+  const conversationIdValue = params?.conversationId
 
   return (
     <AssistantWorkspace
@@ -21,6 +22,7 @@ export default async function LegalAssistantPage({ searchParams }: LegalAssistan
       initialPrompt={typeof promptValue === "string" ? promptValue : undefined}
       initialIssueType={typeof issueValue === "string" ? issueValue : undefined}
       initialUrgency={typeof urgencyValue === "string" ? urgencyValue : undefined}
+      initialConversationId={typeof conversationIdValue === "string" ? conversationIdValue : undefined}
     />
   )
 }

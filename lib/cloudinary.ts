@@ -60,7 +60,11 @@ export async function uploadDocumentToCloudinary(input: {
   formData.set("use_filename", "false")
   formData.set("signature", signature)
 
-  const response = await fetch(`https://api.cloudinary.com/v1_1/${config.cloudName}/raw/upload`, {
+  const isPdf = input.file.type === "application/pdf" || input.file.name.toLowerCase().endsWith(".pdf")
+  const isImage = input.file.type.startsWith("image/")
+  const resourceType = (isPdf || isImage) ? "image" : "raw"
+
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${config.cloudName}/${resourceType}/upload`, {
     method: "POST",
     body: formData,
     cache: "no-store",

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { useMemo, useState, useRef } from "react"
+import { useMemo, useState, useRef, useEffect } from "react"
 import {
   BookOpenText,
   Download,
@@ -52,6 +52,7 @@ interface AssistantWorkspaceProps {
   initialPrompt?: string
   initialIssueType?: string
   initialUrgency?: string
+  initialConversationId?: string
 }
 
 const suggestions = [
@@ -180,12 +181,13 @@ export function AssistantWorkspace({
   initialPrompt,
   initialIssueType = "general",
   initialUrgency = "normal",
+  initialConversationId,
 }: AssistantWorkspaceProps) {
   const { toast } = useToast()
   const [query, setQuery] = useState(initialPrompt ?? "")
   const [issueType, setIssueType] = useState(initialIssueType)
   const [urgency, setUrgency] = useState(initialUrgency)
-  const [conversationId, setConversationId] = useState<string | undefined>()
+  const [conversationId, setConversationId] = useState<string | undefined>(initialConversationId)
   const [threadList, setThreadList] = useState(initialConversations)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingConversation, setIsLoadingConversation] = useState(false)
@@ -193,6 +195,12 @@ export function AssistantWorkspace({
   const [isListening, setIsListening] = useState(false)
   const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null)
   const recognitionRef = useRef<any>(null)
+
+  useEffect(() => {
+    if (initialConversationId) {
+      void loadConversation(initialConversationId)
+    }
+  }, [initialConversationId])
 
   function startSpeechToText() {
     if (typeof window === "undefined") return

@@ -34,6 +34,7 @@ export interface SavedArtifact {
   createdAt: string
   updatedAt: string
   preview: string
+  payload?: Record<string, any>
 }
 
 export interface UserProfile {
@@ -164,6 +165,7 @@ function normalizeArtifact(doc: SavedArtifactDoc): SavedArtifact {
     createdAt: doc.createdAt || "",
     updatedAt: doc.updatedAt || "",
     preview: doc.preview || "",
+    payload: doc.payload,
   }
 }
 
@@ -394,6 +396,13 @@ export async function listUserArtifacts(userId: string, limit = 6): Promise<Save
   const artifacts = await artifactsCollection()
   const docs = await artifacts.find({ userId }).sort({ updatedAt: -1 }).limit(limit).toArray()
   return docs.map(normalizeArtifact)
+}
+
+export async function getSavedArtifact(userId: string, artifactId: string): Promise<SavedArtifact | null> {
+  const artifacts = await artifactsCollection()
+  const doc = await artifacts.findOne({ id: artifactId, userId })
+  if (!doc) return null
+  return normalizeArtifact(doc)
 }
 
 export async function saveArtifact(input: {

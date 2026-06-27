@@ -131,7 +131,11 @@ export default async function WorkspacePage() {
             ) : (
               <div className="space-y-3">
                 {conversations.map((conversation) => (
-                  <div key={conversation.id} className="rounded-2xl border border-white/80 bg-white/60 p-4 backdrop-blur-sm transition hover:bg-white/80">
+                  <Link
+                    key={conversation.id}
+                    href={`/tools/legal-assistant?conversationId=${conversation.id}`}
+                    className="block rounded-2xl border border-white/80 bg-white/60 p-4 backdrop-blur-sm transition hover:bg-white hover:border-emerald-300 hover:shadow-sm"
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium text-foreground">{conversation.title}</p>
@@ -142,7 +146,7 @@ export default async function WorkspacePage() {
                       </span>
                     </div>
                     <p className="mt-3 text-xs text-muted-foreground">Updated {formatDate(conversation.updatedAt)}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -165,18 +169,28 @@ export default async function WorkspacePage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {artifacts.map((artifact) => (
-                  <div key={artifact.id} className="rounded-2xl border border-white/80 bg-white/60 p-4 backdrop-blur-sm transition hover:bg-white/80">
-                    <div className="flex items-center justify-between gap-4">
-                      <p className="truncate font-medium text-foreground">{artifact.title}</p>
-                      <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-800">
-                        {artifact.kind}
-                      </span>
-                    </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{artifact.preview}</p>
-                    <p className="mt-3 text-xs text-muted-foreground">Saved {formatDate(artifact.updatedAt)}</p>
-                  </div>
-                ))}
+                {artifacts.map((artifact) => {
+                  const href =
+                    artifact.kind === "draft"
+                      ? `/tools/document-generator?artifactId=${artifact.id}`
+                      : `/tools/document-simplifier?artifactId=${artifact.id}`
+                  return (
+                    <Link
+                      key={artifact.id}
+                      href={href}
+                      className="block rounded-2xl border border-white/80 bg-white/60 p-4 backdrop-blur-sm transition hover:bg-white hover:border-emerald-300 hover:shadow-sm"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="truncate font-medium text-foreground">{artifact.title}</p>
+                        <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-800">
+                          {artifact.kind}
+                        </span>
+                      </div>
+                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{artifact.preview}</p>
+                      <p className="mt-3 text-xs text-muted-foreground">Saved {formatDate(artifact.updatedAt)}</p>
+                    </Link>
+                  )
+                })}
               </div>
             )}
 

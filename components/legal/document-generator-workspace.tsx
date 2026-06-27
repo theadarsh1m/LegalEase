@@ -1,14 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
-import { Check, Copy, Download, FileText, Loader2, Scale, Sparkles } from "lucide-react"
+import { useEffect, useMemo, useState, useRef } from "react"
+import { useSearchParams } from "next/navigation"
+import { Check, Copy, Download, FileText, Loader2, Scale, Sparkles, Volume2, VolumeX } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/components/ui/use-toast"
 import { documentTemplates, type DocumentTemplateDefinition } from "@/lib/legal/templates"
 
@@ -34,6 +35,34 @@ export function DocumentGeneratorWorkspace({ initialTemplateId }: DocumentGenera
   const [documentText, setDocumentText] = useState("")
   const [artifactId, setArtifactId] = useState("")
   const [copied, setCopied] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+
+  const searchParams = useSearchParams()
+  const artifactIdParam = searchParams ? searchParams.get("artifactId") : null
+
+  useEffect(() => {
+    if (!artifactIdParam) return
+
+    async function loadArtifact() {
+      try {
+        const res = await fetch(`/api/documents/artifact?artifactId=${artifactIdParam}`)
+        const data = await res.json()
+        if (res.ok && data.artifact) {
+          const { payload, id } = data.artifact
+          setArtifactId(id)
+          if (payload) {
+            if (payload.templateId) setTemplateId(payload.templateId)
+            if (payload.values) setValues(payload.values)
+            if (payload.output) setDocumentText(payload.output)
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load artifact:", err)
+      }
+    }
+
+    void loadArtifact()
+  }, [artifactIdParam])
 
   const activeTemplate = useMemo<DocumentTemplateDefinition | null>(() => {
     return documentTemplates.find((template) => template.id === templateId) ?? null
@@ -50,11 +79,25 @@ export function DocumentGeneratorWorkspace({ initialTemplateId }: DocumentGenera
     }
   }, [activeTemplate?.name, artifactId, documentText, templateId, values])
 
+  // Clear text and values when changing templates
   useEffect(() => {
     setValues({})
     setDocumentText("")
     setArtifactId("")
+    if (typeof window !== "undefined") {
+      window.speechSynthesis.cancel()
+    }
+    setIsSpeaking(false)
   }, [templateId])
+
+  // Clean speech synthesis on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined") {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   function updateValue(fieldId: string, value: string) {
     setValues((current) => ({ ...current, [fieldId]: value }))
@@ -77,6 +120,10 @@ export function DocumentGeneratorWorkspace({ initialTemplateId }: DocumentGenera
     }
 
     setIsLoading(true)
+    if (typeof window !== "undefined") {
+      window.speechSynthesis.cancel()
+    }
+    setIsSpeaking(false)
 
     try {
       const response = await fetch("/api/documents/generate", {
@@ -112,6 +159,10 @@ export function DocumentGeneratorWorkspace({ initialTemplateId }: DocumentGenera
   function handleCopy() {
     navigator.clipboard.writeText(documentText)
     setCopied(true)
+    toast({
+      title: "Copied",
+      description: "Draft copied to clipboard.",
+    })
     window.setTimeout(() => setCopied(false), 2000)
   }
 
@@ -125,213 +176,265 @@ export function DocumentGeneratorWorkspace({ initialTemplateId }: DocumentGenera
     URL.revokeObjectURL(url)
   }
 
+  function handleSpeak() {
+    if (typeof window === "undefined") return
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+      return
+    }
+
+    window.speechSynthesis.cancel()
+    
+    // Strip markdown formatting characters to avoid speaking them
+    const cleanText = documentText
+      .replace(/[\*\_#`~]/g, "")
+      .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1")
+      .trim()
+
+    const utterance = new SpeechSynthesisUtterance(cleanText)
+    utterance.lang = "en-IN"
+
+    utterance.onend = () => {
+      setIsSpeaking(false)
+    }
+    utterance.onerror = () => {
+      setIsSpeaking(false)
+    }
+
+    setIsSpeaking(true)
+    window.speechSynthesis.speak(utterance)
+  }
+
   return (
-    <main className="page-section">
-      <div className="container-shell space-y-8">
-        {/* ── Page Header: open layout ── */}
-        <section>
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                <FileText className="h-3.5 w-3.5" />
-                FIR, RTI, notice, and complaint drafting
+    <main className="flex-1 overflow-hidden bg-gradient-to-br from-amber-50/20 via-neutral-50/50 to-sky-50/30">
+      <div className="mx-auto flex h-[calc(100vh-80px)] w-full max-w-7xl gap-4 p-4 lg:p-6">
+        
+        {/* Left Sidebar Panel: Templates & Variable Forms */}
+        <div className="flex w-full flex-col gap-4 lg:w-[360px] xl:w-[400px] shrink-0 overflow-hidden">
+          <div className="flex flex-col gap-1.5 p-1">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/50 bg-emerald-50/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-800 w-fit">
+              <FileText className="h-3 w-3" />
+              Draft Studio
+            </div>
+            <h1 className="font-display text-2xl font-semibold leading-tight text-neutral-900 mt-2">
+              Generate Legal Drafts
+            </h1>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Factual, structured Indian legal drafts without invented claims.
+            </p>
+          </div>
+
+          <ScrollArea className="flex-1 pr-2">
+            <div className="space-y-4 pb-4">
+              
+              {/* Template Picker Accordion */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block px-1">
+                  1. Choose Template
+                </span>
+                <div className="grid gap-2">
+                  {documentTemplates.map((template) => {
+                    const isActive = template.id === templateId
+                    return (
+                      <button
+                        key={template.id}
+                        type="button"
+                        onClick={() => setTemplateId(template.id)}
+                        className={`w-full rounded-2xl border p-4 text-left transition-all ${
+                          isActive
+                            ? "border-emerald-300 bg-emerald-50/50 shadow-sm"
+                            : "border-white bg-white/70 hover:border-emerald-200 hover:bg-white"
+                        }`}
+                      >
+                        <p className="text-sm font-semibold text-foreground">{template.name}</p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                          {template.description}
+                        </p>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-              <h1 className="mt-5 font-display text-4xl font-semibold leading-tight sm:text-5xl">
-                Generate cleaner first-pass legal drafts without inventing facts.
-              </h1>
-              <p className="mt-4 text-base leading-7 text-muted-foreground md:text-lg">
-                Pick a document type, enter only the facts you know, and get a structured draft designed for review and
-                refinement. The prompts are tuned to stay factual and leave uncertainty visible.
-              </p>
-            </div>
-          </div>
 
-          {/* Feature chips row */}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
-              <span className="font-medium">FIR / police complaint</span>
-            </div>
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
-              <span className="font-medium">RTI request</span>
-            </div>
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
-              <span className="font-medium">Legal notice</span>
-            </div>
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
-              <span className="font-medium">Workplace complaint</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Subtle divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-        <section className="grid gap-6 xl:grid-cols-[0.56fr_0.44fr]">
-          <div className="space-y-6">
-            <Card className="glass-panel border-white/70">
-              <CardHeader>
-                <CardTitle className="text-2xl">Choose a draft type</CardTitle>
-                <CardDescription>Pick the workflow that best matches the user&apos;s legal task.</CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-3 md:grid-cols-2">
-                {documentTemplates.map((template) => (
-                  <button
-                    key={template.id}
-                    type="button"
-                    onClick={() => setTemplateId(template.id)}
-                    className={`rounded-3xl border p-5 text-left transition ${
-                      template.id === templateId
-                        ? "border-emerald-400/70 bg-emerald-50"
-                        : "border-white/80 bg-white/85 hover:border-amber-300 hover:bg-amber-50/70"
-                    }`}
-                  >
-                    <p className="text-lg font-semibold text-foreground">{template.name}</p>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{template.description}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {template.fields.slice(0, 3).map((field) => (
-                        <Badge key={field.id} variant="outline">
-                          {field.label}
-                        </Badge>
-                      ))}
-                    </div>
-                  </button>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card className="glass-panel border-white/70">
-              <CardHeader>
-                <CardTitle className="text-2xl">{activeTemplate?.name ?? "Draft details"}</CardTitle>
-                <CardDescription>{activeTemplate?.purpose ?? "Provide the details required for drafting."}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {activeTemplate ? (
-                  <div className="rounded-3xl border border-white/80 bg-white/85 p-5">
-                    <p className="text-sm font-semibold text-foreground">Prompt guardrails</p>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{activeTemplate.draftingNotes}</p>
-                  </div>
-                ) : null}
-
-                <div className="grid gap-5">
-                  {activeTemplate?.fields.map((field) => (
-                    <div key={field.id} className="space-y-2">
-                      <Label htmlFor={field.id}>
-                        {field.label}
-                        {field.required ? " *" : ""}
-                      </Label>
-                      {field.type === "textarea" ? (
-                        <Textarea
-                          id={field.id}
-                          value={values[field.id] ?? ""}
-                          onChange={(event) => updateValue(field.id, event.target.value)}
-                          placeholder={field.placeholder}
-                          className="min-h-[120px]"
-                        />
-                      ) : (
-                        <Input
-                          id={field.id}
-                          type={field.type}
-                          value={values[field.id] ?? ""}
-                          onChange={(event) => updateValue(field.id, event.target.value)}
-                          placeholder={field.placeholder}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Button className="w-full" onClick={handleGenerate} disabled={isLoading || !activeTemplate}>
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-                    Generate draft
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() =>
-                      downloadJsonFile(
-                        `legalease-draft-${activeTemplate?.id ?? "template"}.json`,
-                        exportPayload,
-                      )
-                    }
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Export JSON
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
-            <Card className="glass-panel border-white/70">
-              <CardHeader>
-                <CardTitle className="text-2xl">Generated document</CardTitle>
-                <CardDescription>
-                  {artifactId ? `Saved as ${artifactId}` : "A saved draft will appear here after generation."}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {documentText ? (
-                  <>
-                    <div className="rounded-3xl border border-white/80 bg-white/85 p-5">
-                      <p className="whitespace-pre-line text-sm leading-7 text-foreground/85">{documentText}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                      <Button variant="outline" onClick={handleCopy}>
-                        {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                        {copied ? "Copied" : "Copy draft"}
-                      </Button>
-                      <Button variant="outline" onClick={handleDownload}>
-                        <Download className="mr-2 h-4 w-4" />
-                        Download text
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Choose a template, complete the factual fields, and generate the first pass of the document here.
+              {/* Guardrails Box */}
+              {activeTemplate && (
+                <div className="rounded-2xl border border-amber-100 bg-amber-50/40 p-4 space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-800">
+                    Drafting Guardrails
                   </p>
-                )}
-              </CardContent>
-            </Card>
+                  <p className="text-[11px] leading-relaxed text-amber-900/80">
+                    {activeTemplate.draftingNotes}
+                  </p>
+                </div>
+              )}
 
-            <Card className="glass-panel border-white/70">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Scale className="h-5 w-5 text-primary" />
-                  Drafting handoff
-                </CardTitle>
-                <CardDescription>Use the assistant first if you need help organizing the matter before drafting.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm leading-7 text-muted-foreground">
-                <p>The generator performs best when names, dates, places, and chronology are already settled.</p>
-                <p>If facts are incomplete or emotionally tangled, use the legal assistant to produce a cleaner timeline and evidence list first.</p>
-                <Button asChild className="w-full justify-between">
-                  <Link
-                    href={`/tools/legal-assistant?issue=general&urgency=normal&prompt=${encodeURIComponent(
-                      `Help me prepare the facts and evidence checklist for a ${activeTemplate?.name ?? "legal draft"} before I generate it.`,
-                    )}`}
-                  >
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Open assistant with drafting context
-                  </Link>
+              {/* Form Variables Input */}
+              {activeTemplate && (
+                <div className="space-y-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block px-1">
+                    2. Provide Details
+                  </span>
+                  <div className="rounded-2xl border border-white bg-white/50 p-4 space-y-4">
+                    {activeTemplate.fields.map((field) => (
+                      <div key={field.id} className="space-y-1.5">
+                        <Label htmlFor={field.id} className="text-[11px] font-medium text-foreground/80">
+                          {field.label}
+                          {field.required ? " *" : ""}
+                        </Label>
+                        {field.type === "textarea" ? (
+                          <Textarea
+                            id={field.id}
+                            value={values[field.id] ?? ""}
+                            onChange={(event) => updateValue(field.id, event.target.value)}
+                            placeholder={field.placeholder}
+                            className="min-h-[90px] rounded-xl border-white bg-white/60 text-xs placeholder:text-muted-foreground/60 shadow-none focus-visible:ring-emerald-500"
+                          />
+                        ) : (
+                          <Input
+                            id={field.id}
+                            type={field.type}
+                            value={values[field.id] ?? ""}
+                            onChange={(event) => updateValue(field.id, event.target.value)}
+                            placeholder={field.placeholder}
+                            className="h-9 rounded-xl border-white bg-white/60 text-xs placeholder:text-muted-foreground/60 shadow-none focus-visible:ring-emerald-500"
+                          />
+                        )}
+                      </div>
+                    ))}
+
+                    <div className="grid gap-2 pt-2">
+                      <Button onClick={handleGenerate} disabled={isLoading} className="rounded-xl h-9 text-xs">
+                        {isLoading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
+                        Generate legal draft
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => downloadJsonFile(`legalease-draft-${activeTemplate.id}.json`, exportPayload)}
+                        className="rounded-xl h-9 text-xs border-white bg-white/40 hover:bg-white/80"
+                      >
+                        <Download className="mr-1.5 h-3.5 w-3.5" />
+                        Export JSON
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Right Workspace Panel: Dynamic Document Editor */}
+        <div className="flex flex-1 flex-col overflow-hidden rounded-3xl border border-white bg-white/30 shadow-xl backdrop-blur-md">
+          {/* Header toolbar */}
+          <div className="flex items-center justify-between border-b border-border/40 bg-white/60 px-6 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 select-none items-center justify-center rounded-xl border bg-white shadow-sm">
+                <Scale className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-foreground block">
+                  {activeTemplate ? activeTemplate.name : "Select Template"}
+                </span>
+                <span className="text-[10px] text-muted-foreground block uppercase tracking-wider font-semibold">
+                  {artifactId ? `Document Vault ID: ${artifactId}` : "Interactive Draft Editor"}
+                </span>
+              </div>
+            </div>
+
+            {/* Document Controls */}
+            {documentText && (
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleSpeak}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full h-8 border-white/80 bg-white/60 hover:bg-white text-xs px-3"
+                  title="Listen to draft"
+                >
+                  {isSpeaking ? (
+                    <>
+                      <VolumeX className="mr-1.5 h-3.5 w-3.5 animate-pulse text-destructive" />
+                      Stop Reading
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="mr-1.5 h-3.5 w-3.5" />
+                      Listen
+                    </>
+                  )}
                 </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-panel border-white/70">
-              <CardHeader>
-                <CardTitle className="text-xl">Guardrails</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm leading-7 text-muted-foreground">
-                <p>The model is instructed to stay factual, chronological, and formal without hallucinating authorities or procedural certainty.</p>
-                <p>Missing facts should remain visible as blanks or placeholders, not be silently invented by the generator.</p>
-                <p>Before submission, users should still verify names, dates, addresses, annexures, and local filing requirements.</p>
-              </CardContent>
-            </Card>
+                <Button
+                  onClick={handleCopy}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full h-8 border-white/80 bg-white/60 hover:bg-white text-xs px-3"
+                >
+                  {copied ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Copy className="mr-1.5 h-3.5 w-3.5" />}
+                  {copied ? "Copied" : "Copy text"}
+                </Button>
+                <Button
+                  onClick={handleDownload}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full h-8 border-white/80 bg-white/60 hover:bg-white text-xs px-3"
+                >
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  Download TXT
+                </Button>
+              </div>
+            )}
           </div>
-        </section>
+
+          {/* Paper View Container */}
+          <ScrollArea className="flex-1 bg-neutral-100/50 p-6">
+            <div className="mx-auto my-4 max-w-[680px]">
+              {documentText ? (
+                <div 
+                  className="bg-white rounded-xl shadow-md border border-neutral-200/50 p-10 min-h-[800px] flex flex-col transition-all duration-200"
+                  style={{
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)"
+                  }}
+                >
+                  <div className="mb-4 border-b border-border/20 pb-2 text-[10px] uppercase font-bold tracking-widest text-muted-foreground/50 flex justify-between">
+                    <span>Generated Legal Draft</span>
+                    <span>Feel free to edit directly below</span>
+                  </div>
+                  <Textarea
+                    value={documentText}
+                    onChange={(event) => setDocumentText(event.target.value)}
+                    className="flex-1 w-full min-h-[700px] p-0 border-0 outline-none focus-visible:ring-0 shadow-none resize-none text-sm leading-relaxed text-foreground font-sans font-normal"
+                    placeholder="Enter details in the left panel and click generate..."
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-8 bg-white/40 border border-dashed border-neutral-300 rounded-3xl">
+                  <FileText className="h-10 w-10 text-muted-foreground/50 mb-3" />
+                  <p className="text-sm font-semibold text-foreground">No draft generated yet</p>
+                  <p className="mt-1 max-w-[320px] text-xs leading-relaxed text-muted-foreground">
+                    Complete the required form parameters on the left sidebar to generate your legal document draft here.
+                  </p>
+                  
+                  {activeTemplate && (
+                    <Button asChild variant="outline" size="sm" className="mt-4 rounded-xl text-xs bg-white border-white">
+                      <Link
+                        href={`/tools/legal-assistant?issue=general&urgency=normal&prompt=${encodeURIComponent(
+                          `Help me prepare the facts and evidence checklist for a ${activeTemplate.name} before I generate it.`,
+                        )}`}
+                      >
+                        <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                        Ask AI Assistant for help
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
       </div>
     </main>
   )

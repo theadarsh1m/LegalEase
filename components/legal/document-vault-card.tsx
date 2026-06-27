@@ -1,17 +1,17 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { ExternalLink, FileText, Loader2, UploadCloud, X } from "lucide-react"
+import { ChevronDown, ChevronUp, ExternalLink, FileText, Loader2, UploadCloud, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-import type { StoredDocumentSummary } from "@/lib/db"
+import type { StoredDocumentRecord } from "@/lib/db"
 
 interface DocumentVaultCardProps {
-  initialDocuments: StoredDocumentSummary[]
+  initialDocuments: StoredDocumentRecord[]
 }
 
 const documentCategories = [
@@ -42,7 +42,8 @@ function formatDate(value: string) {
 export function DocumentVaultCard({ initialDocuments }: DocumentVaultCardProps) {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [documents, setDocuments] = useState(initialDocuments)
+  const [documents, setDocuments] = useState<StoredDocumentRecord[]>(initialDocuments)
+  const [expandedDocId, setExpandedDocId] = useState<string | null>(null)
   const [title, setTitle] = useState("")
   const [category, setCategory] = useState("general")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -88,7 +89,7 @@ export function DocumentVaultCard({ initialDocuments }: DocumentVaultCardProps) 
       })
 
       const data = (await response.json()) as {
-        document?: StoredDocumentSummary
+        document?: StoredDocumentRecord
         warning?: string | null
         error?: string
       }
@@ -210,37 +211,80 @@ export function DocumentVaultCard({ initialDocuments }: DocumentVaultCardProps) 
               No stored documents yet. Upload notices, contracts, complaints, orders, or evidence files here.
             </p>
           ) : (
-            documents.map((document) => (
-              <div key={document.id} className="rounded-3xl border border-white/80 bg-white/85 p-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary" />
-                      <p className="font-medium text-foreground">{document.title}</p>
+            documents.map((document) => {
+              const isExpanded = expandedDocId === document.id
+              return (
+                <div key={document.id} className="rounded-3xl border border-white/80 bg-white/85 p-5 transition-all duration-300">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-primary shrink-0" />
+                        <p className="font-medium text-foreground truncate">{document.title}</p>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                        {isExpanded 
+                          ? (document.preview || "Stored in the vault.")
+                          : (document.preview ? `${document.preview.slice(0, 150)}...` : "Stored in the vault.")
+                        }
+                      </p>
                     </div>
-                    <p className="mt-2 text-sm text-muted-foreground">{document.preview || "Stored in the vault."}</p>
+                    <span className="rounded-full border border-emerald-900/10 bg-emerald-50 px-3 py-1 text-xs uppercase tracking-[0.18em] text-emerald-900 shrink-0">
+                      {document.status}
+                    </span>
                   </div>
-                  <span className="rounded-full border border-emerald-900/10 bg-emerald-50 px-3 py-1 text-xs uppercase tracking-[0.18em] text-emerald-900">
-                    {document.status}
-                  </span>
-                </div>
 
-                <div className="mt-4 flex flex-wrap items-center gap-4 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  <span>{document.category}</span>
-                  <span>{formatDate(document.updatedAt)}</span>
-                  <span>{Math.max(1, Math.round(document.fileSize / 1024))} KB</span>
-                </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-4 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    <span>{document.category}</span>
+                    <span>{formatDate(document.updatedAt)}</span>
+                    <span>{Math.max(1, Math.round(document.fileSize / 1024))} KB</span>
+                  </div>
 
-                {document.secureUrl ? (
-                  <Button variant="ghost" asChild className="mt-3 px-0">
-                    <a href={document.secureUrl} target="_blank" rel="noreferrer">
-                      Open stored file
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    </a>
-                  </Button>
-                ) : null}
-              </div>
-            ))
+                  {/* Expanded Summary and Analysis Box */}
+                  {isExpanded && document.analysis && (
+                    <div className="mt-4 rounded-2xl border border-white/60 bg-white/50 p-4 shadow-inner text-xs leading-relaxed space-y-2">
+                      <p className="font-bold text-emerald-900 uppercase tracking-widest text-[9px]">Full Document Analysis</p>
+                      <p className="text-foreground/80 whitespace-pre-wrap font-sans">{document.analysis}</p>
+                    </div>
+                  )}
+
+                  {isExpanded && !document.analysis && document.extractedText && (
+                    <div className="mt-4 rounded-2xl border border-white/60 bg-white/50 p-4 shadow-inner text-xs leading-relaxed space-y-2">
+                      <p className="font-bold text-neutral-600 uppercase tracking-widest text-[9px]">Extracted Text Preview</p>
+                      <p className="text-muted-foreground whitespace-pre-wrap max-h-48 overflow-y-auto font-mono text-[10px] bg-white/30 p-3 rounded-xl leading-relaxed">{document.extractedText}</p>
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/10 pt-3">
+                    {document.secureUrl && (
+                      <Button variant="ghost" asChild className="h-8 px-3 rounded-full text-xs">
+                        <a href={document.secureUrl} target="_blank" rel="noreferrer">
+                          Open stored file
+                          <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                        </a>
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      type="button"
+                      onClick={() => setExpandedDocId(isExpanded ? null : document.id)}
+                      className="h-8 px-3 rounded-full text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      {isExpanded ? (
+                        <>
+                          <ChevronUp className="mr-1.5 h-3.5 w-3.5" />
+                          Collapse summary
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="mr-1.5 h-3.5 w-3.5" />
+                          View full summary
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )
+            })
           )}
         </div>
       </CardContent>

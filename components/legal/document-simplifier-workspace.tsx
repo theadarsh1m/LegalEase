@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import Image from "next/image"
 import {
   Download,
@@ -115,7 +116,11 @@ function renderFormattedContent(content: string) {
   })
 }
 
-export function DocumentSimplifierWorkspace() {
+interface DocumentSimplifierWorkspaceProps {
+  initialArtifactId?: string
+}
+
+export function DocumentSimplifierWorkspace({ initialArtifactId }: DocumentSimplifierWorkspaceProps) {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [title, setTitle] = useState("LegalEase document session")
@@ -128,6 +133,66 @@ export function DocumentSimplifierWorkspace() {
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [isChatLoading, setIsChatLoading] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
+
+  const searchParams = useSearchParams()
+  const artifactIdParam = searchParams ? searchParams.get("artifactId") : null
+  const activeArtifactId = initialArtifactId || artifactIdParam
+
+  useEffect(() => {
+    if (!activeArtifactId) return
+
+    async function loadArtifact() {
+      try {
+        const res = await fetch(`/api/documents/artifact?artifactId=${activeArtifactId}`)
+        const data = await res.json()
+        if (res.ok && data.artifact) {
+          const { payload, title: artifactTitle, id } = data.artifact
+          setArtifactId(id)
+          if (artifactTitle) setTitle(artifactTitle)
+          if (payload) {
+            if (payload.documents) {
+              setDocuments(payload.documents)
+            } else if (payload.input) {
+              const doc: AttachedDocument = {
+                id: "artifact-doc-" + id,
+                name: artifactTitle || "Attached Document",
+                text: payload.input || "",
+                category: payload.category || "general",
+                status: "analyzed",
+                fileSize: (payload.input || "").length,
+                source: "paste"
+              }
+              setDocuments([doc])
+            }
+
+            if (payload.messages) {
+              setMessages(payload.messages)
+            } else if (payload.output) {
+              setMessages([
+                createIntroMessage(),
+                {
+                  id: "artifact-init-msg-" + id,
+                  role: "assistant",
+                  kind: "chat",
+                  content: `Loaded document "${artifactTitle || "Attached Document"}". Below is the simplified brief analysis.`
+                },
+                {
+                  id: "artifact-summary-msg-" + id,
+                  role: "assistant",
+                  kind: "summary",
+                  content: payload.output || ""
+                }
+              ])
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load artifact:", err)
+      }
+    }
+
+    void loadArtifact()
+  }, [activeArtifactId])
 
   function cancelExtraction() {
     if (abortControllerRef.current) {
