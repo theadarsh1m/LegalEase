@@ -148,7 +148,7 @@ export function DocumentVaultCard({ initialDocuments }: DocumentVaultCardProps) 
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,.txt,.md,.doc,.docx"
+          accept=".pdf,.txt,.md,.json,.csv,.docx,.doc,.rtf,.xml,.html,.htm,.yaml,.yml,.log"
           className="hidden"
           onChange={(event) => {
             const file = event.target.files?.[0] ?? null
