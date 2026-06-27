@@ -14,7 +14,6 @@ import {
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
@@ -22,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { extractDocumentText, getDocumentExtractionMessage } from "@/lib/documents/client"
+import { ChatMinimap } from "./chat-minimap"
 
 interface AttachedDocument {
   id: string
@@ -82,6 +82,19 @@ export function DocumentSimplifierWorkspace() {
   const [isExtracting, setIsExtracting] = useState(false)
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [isChatLoading, setIsChatLoading] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  function cancelExtraction() {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+      setIsExtracting(false)
+      toast({
+        title: "Cancelled",
+        description: "Text extraction was cancelled.",
+      })
+    }
+  }
 
   const workingDocuments = useMemo<AttachedDocument[]>(() => {
     if (documents.length > 0) {
@@ -126,14 +139,17 @@ export function DocumentSimplifierWorkspace() {
     }
 
     setIsExtracting(true)
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
     try {
       const extractedDocuments: AttachedDocument[] = []
       const failedFiles: string[] = []
 
       for (const file of files) {
+        if (controller.signal.aborted) break
         try {
-          const extractedText = (await extractDocumentText(file)).trim()
+          const extractedText = (await extractDocumentText(file, controller.signal)).trim()
 
           if (!extractedText) {
             toast({
@@ -152,6 +168,9 @@ export function DocumentSimplifierWorkspace() {
             source: "upload",
           })
         } catch (error) {
+          if (error instanceof Error && error.name === "AbortError") {
+            return
+          }
           failedFiles.push(
             `${file.name}: ${error instanceof Error ? error.message : "The file could not be read on the server."}`,
           )
@@ -183,6 +202,9 @@ export function DocumentSimplifierWorkspace() {
       }
     } finally {
       setIsExtracting(false)
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null
+      }
 
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
@@ -333,37 +355,20 @@ export function DocumentSimplifierWorkspace() {
   return (
     <main className="page-section">
       <div className="container-shell space-y-8">
-        {/* ── Page Header: open layout, no box ── */}
+        {/* ── Page Header: open layout ── */}
         <section>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                 <Sparkles className="h-3.5 w-3.5" />
-                Document chat for legal files
+                Document Brief & Analysis
               </div>
               <h1 className="mt-5 font-display text-4xl font-semibold leading-tight sm:text-5xl">
-                Upload legal documents, generate a clear brief, then keep asking questions.
+                Document Simplifier
               </h1>
               <p className="mt-4 text-base leading-7 text-muted-foreground md:text-lg">
-                Supports PDF, DOCX, text, JSON, and markdown inputs. Produces a saved plain-language
-                summary and continues with grounded follow-up answers.
+                Upload legal documents, extract their text locally, generate a quick brief, and query their contents.
               </p>
-            </div>
-          </div>
-
-          {/* Feature chips row */}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
-              <FileText className="h-4 w-4 text-primary" />
-              <span className="font-medium">Multi-file upload</span>
-            </div>
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="font-medium">Summary + follow-up chat</span>
-            </div>
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
-              <Download className="h-4 w-4 text-primary" />
-              <span className="font-medium">JSON transcript export</span>
             </div>
           </div>
         </section>
@@ -371,192 +376,234 @@ export function DocumentSimplifierWorkspace() {
         {/* Subtle divider */}
         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-        <section className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-          <div className="space-y-6">
-            <Card className="glass-panel border-white/70">
-              <CardHeader>
-                <CardTitle className="text-2xl">Documents</CardTitle>
-                <CardDescription>Attach case files or paste official text into this session.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Session title</p>
-                  <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Rent notice and follow-up chat" />
-                </div>
+        <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
+          {/* ── Left Sidebar (Document Manager) ── */}
+          <aside className="flex flex-col gap-6">
+            {/* Document Sources Container */}
+            <div className="flex flex-col gap-5 rounded-3xl border border-white/60 bg-white/40 p-5 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sources & Settings</span>
+                <Badge variant="secondary" className="text-[10px] px-2 h-4">
+                  {workingDocuments.length} Active
+                </Badge>
+              </div>
 
-                <Tabs defaultValue="upload" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="upload">Upload files</TabsTrigger>
-                    <TabsTrigger value="paste">Paste text</TabsTrigger>
-                  </TabsList>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block">Session Title</label>
+                <Input 
+                  value={title} 
+                  onChange={(event) => setTitle(event.target.value)} 
+                  placeholder="Rent notice and follow-up chat" 
+                  className="rounded-2xl border-white/80 bg-white/60 h-9 text-xs focus-visible:ring-emerald-500"
+                />
+              </div>
 
-                  <TabsContent value="upload" className="mt-5 space-y-4">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".pdf,.txt,.md,.json,.csv,.docx,.doc,.rtf,.xml,.html,.htm,.yaml,.yml,.log,.png,.jpg,.jpeg,.webp,.gif,.bmp,.tiff,.py,.js,.ts,.jsx,.tsx,.css,.sql,.java,.go,.rs,.c,.cpp"
-                      multiple
-                      className="hidden"
-                      onChange={(event) => void handleFiles(event.target.files)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex min-h-[240px] w-full flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-white/80 px-6 text-center transition hover:border-amber-300 hover:bg-amber-50/60"
-                    >
-                      {isExtracting ? (
-                        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                      ) : (
-                        <UploadCloud className="h-10 w-10 text-primary" />
-                      )}
-                      <p className="mt-4 text-base font-medium text-foreground">Attach PDFs, DOCX files, or text records</p>
-                      <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                        Files are parsed locally first so the chat can work directly with extracted document text.
-                      </p>
-                    </button>
-                  </TabsContent>
+              <Tabs defaultValue="upload" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 bg-secondary/50 rounded-full h-8 p-1">
+                  <TabsTrigger value="upload" className="rounded-full text-[11px] h-6">Upload</TabsTrigger>
+                  <TabsTrigger value="paste" className="rounded-full text-[11px] h-6">Paste Text</TabsTrigger>
+                </TabsList>
 
-                  <TabsContent value="paste" className="mt-5 space-y-4">
-                    <Textarea
-                      value={text}
-                      onChange={(event) => setText(event.target.value)}
-                      className="min-h-[260px]"
-                      placeholder="Paste the legal notice, contract text, FIR extract, court order, RTI reply, or any official document text here."
-                    />
-                    <p className="text-sm leading-6 text-muted-foreground">
-                      Pasted text will be used as the active source document if you do not upload files.
-                    </p>
-                  </TabsContent>
-                </Tabs>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Button onClick={handleSummarize} disabled={isSummarizing || isExtracting || workingDocuments.length === 0}>
-                    {isSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-                    Generate legal brief
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => downloadJsonFile(`legalease-document-chat-${title || "session"}.json`, exportPayload)}
-                    disabled={workingDocuments.length === 0}
+                <TabsContent value="upload" className="mt-4 space-y-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.txt,.md,.json,.csv,.docx,.doc,.rtf,.xml,.html,.htm,.yaml,.yml,.log,.png,.jpg,.jpeg,.webp,.gif,.bmp,.tiff,.py,.js,.ts,.jsx,.tsx,.css,.sql,.java,.go,.rs,.c,.cpp"
+                    multiple
+                    className="hidden"
+                    onChange={(event) => void handleFiles(event.target.files)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isExtracting) {
+                        cancelExtraction()
+                      } else {
+                        fileInputRef.current?.click()
+                      }
+                    }}
+                    className={`flex min-h-[160px] w-full flex-col items-center justify-center rounded-2xl border border-dashed px-4 text-center transition ${
+                      isExtracting
+                        ? "border-destructive bg-destructive/5 hover:bg-destructive/10"
+                        : "border-border bg-white/60 hover:border-sky-300 hover:bg-white"
+                    }`}
                   >
-                    <Download className="mr-2 h-4 w-4" />
-                    Export JSON
-                  </Button>
-                </div>
+                    {isExtracting ? (
+                      <>
+                        <div className="relative flex items-center justify-center">
+                          <Loader2 className="h-7 w-7 animate-spin text-destructive" />
+                          <X className="absolute h-3 w-3 text-destructive" />
+                        </div>
+                        <span className="mt-3 text-xs font-semibold text-destructive">Extracting text...</span>
+                        <span className="mt-1 text-[10px] text-destructive/70 underline">
+                          Click to cancel
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud className="h-7 w-7 text-primary" />
+                        <span className="mt-3 text-xs font-semibold text-foreground">Attach document files</span>
+                        <span className="mt-1 text-[10px] text-muted-foreground leading-relaxed max-w-[200px]">
+                          PDF, DOCX, DOC, RTF, plain text, or images (Local OCR)
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </TabsContent>
 
-                <Separator />
+                <TabsContent value="paste" className="mt-4">
+                  <Textarea
+                    value={text}
+                    onChange={(event) => setText(event.target.value)}
+                    className="min-h-[160px] rounded-2xl border-white/80 bg-white/60 text-xs placeholder:text-muted-foreground/70"
+                    placeholder="Paste your legal notice, contract clause, or official text here..."
+                  />
+                </TabsContent>
+              </Tabs>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium">Attached sources</p>
-                    <Badge variant="outline">{workingDocuments.length} active</Badge>
-                  </div>
+              <div className="grid gap-2">
+                <Button 
+                  onClick={handleSummarize} 
+                  disabled={isSummarizing || isExtracting || workingDocuments.length === 0}
+                  className="rounded-2xl text-xs h-9"
+                >
+                  {isSummarizing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <FileText className="mr-1.5 h-3.5 w-3.5" />}
+                  Generate Brief
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => downloadJsonFile(`legalease-document-chat-${title || "session"}.json`, exportPayload)}
+                  disabled={workingDocuments.length === 0}
+                  className="rounded-2xl border-white/80 bg-white/60 hover:bg-white text-xs h-9"
+                >
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  Export Session JSON
+                </Button>
+              </div>
+            </div>
 
-                  {workingDocuments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No active documents yet. Upload files or paste text to start.</p>
-                  ) : (
-                    workingDocuments.map((document) => (
-                      <div key={document.id} className="rounded-2xl border border-white/80 bg-white/85 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{document.name}</p>
-                            <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                              {document.source} · {Math.max(1, Math.round(document.size / 1024))} KB
+            {/* Attached Sources List */}
+            {workingDocuments.length > 0 && (
+              <div className="flex flex-col gap-3 rounded-3xl border border-white/60 bg-white/40 p-4 backdrop-blur-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Attached Files</span>
+                <ScrollArea className="h-[200px] pr-2">
+                  <div className="flex flex-col gap-2">
+                    {workingDocuments.map((doc) => (
+                      <div key={doc.id} className="rounded-2xl border border-border bg-white p-3 text-xs flex flex-col gap-1.5 relative group">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-foreground truncate">{doc.name}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
+                              {doc.source} · {Math.max(1, Math.round(doc.size / 1024))} KB
                             </p>
                           </div>
-                          {document.id !== "pasted-draft" ? (
-                            <Button type="button" variant="ghost" className="h-8 px-2" onClick={() => removeDocument(document.id)}>
-                              <X className="h-4 w-4" />
+                          {doc.id !== "pasted-draft" && (
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              className="h-6 w-6 rounded-full p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/5 shrink-0" 
+                              onClick={() => removeDocument(doc.id)}
+                            >
+                              <X className="h-3.5 w-3.5" />
                             </Button>
-                          ) : null}
-                        </div>
-                        <p className="mt-3 line-clamp-4 text-sm leading-6 text-muted-foreground">{document.text}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
-            <Card className="glass-panel border-white/70">
-              <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-                <div>
-                  <CardTitle className="text-2xl">Document chat</CardTitle>
-                  <CardDescription>
-                    {artifactId ? `Latest brief saved as ${artifactId}. Continue asking follow-up questions below.` : "Generate a brief or ask follow-up questions grounded in the attached documents."}
-                  </CardDescription>
-                </div>
-                <Badge variant="outline">{workingDocuments.length} docs</Badge>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <ScrollArea className="h-[640px] pr-4">
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`rounded-[28px] border p-5 ${
-                          message.role === "assistant"
-                            ? "border-white/80 bg-white/85"
-                            : "ml-auto border-sky-900/10 bg-sky-950 text-white"
-                        }`}
-                      >
-                        <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.18em]">
-                          {message.role === "assistant" ? (
-                            <>
-                              <Image src="/legalease.png" alt="LegalEase" width={20} height={20} className="rounded-md object-contain" />
-                              LegalEase
-                            </>
-                          ) : (
-                            <>
-                              <MessageSquareQuote className="h-4 w-4" />
-                              You
-                            </>
                           )}
                         </div>
-                        <p
-                          className={`whitespace-pre-line text-sm leading-7 ${
-                            message.role === "assistant" ? "text-foreground/85" : "text-white/92"
-                          }`}
-                        >
-                          {message.content}
+                        <p className="text-[10px] leading-relaxed text-muted-foreground line-clamp-2 border-t border-border/40 pt-1.5">
+                          {doc.text}
                         </p>
                       </div>
                     ))}
-
-                    {(isSummarizing || isChatLoading) ? (
-                      <div className="rounded-[28px] border border-white/80 bg-white/85 p-5">
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          {isSummarizing ? "Generating plain-language legal brief..." : "Analyzing the attached documents..."}
-                        </div>
-                      </div>
-                    ) : null}
                   </div>
                 </ScrollArea>
+              </div>
+            )}
+          </aside>
 
-                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                  {quickQuestions.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => void handleAsk(item)}
-                      className="rounded-2xl border border-white/80 bg-white/85 px-4 py-3 text-left text-sm leading-6 text-foreground/80 transition hover:border-sky-300 hover:bg-sky-50"
-                    >
-                      {item}
-                    </button>
-                  ))}
+          {/* ── Right Workspace (Chat & Input) ── */}
+          <div className="flex flex-col gap-6">
+            {/* Main Chat Panel */}
+            <div className="flex flex-col rounded-3xl border border-white bg-white/30 backdrop-blur-md shadow-xl shadow-emerald-950/5 overflow-hidden">
+              {/* Chat Panel Header */}
+              <div className="flex items-center justify-between border-b border-border/40 bg-white/60 px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-foreground">Document Chat Room</span>
+                      <Badge variant="secondary" className="text-[10px] h-4 px-2">
+                        {workingDocuments.length} {workingDocuments.length === 1 ? "document" : "documents"} loaded
+                      </Badge>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground block">
+                      Answers are strictly grounded in your active document content
+                    </span>
+                  </div>
                 </div>
+              </div>
 
-                <Separator />
+              {/* Scrollable Conversation Workspace */}
+              <div className="p-6">
+                <ScrollArea className="h-[480px] pr-4">
+                  <div className="flex flex-col gap-6">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        id={message.role === "user" ? `chat-msg-${message.id}` : undefined}
+                        className={`flex gap-3 max-w-[85%] ${
+                          message.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
+                        }`}
+                      >
+                        {/* Avatar */}
+                        <div className={`flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full border shadow-sm ${
+                          message.role === "user" 
+                            ? "bg-sky-950 border-sky-900 text-white" 
+                            : "bg-white border-border"
+                        }`}>
+                          {message.role === "user" ? (
+                            <span className="text-[10px] font-bold">U</span>
+                          ) : (
+                            <Image src="/legalease.png" alt="LegalEase" width={16} height={16} className="rounded-sm object-contain" />
+                          )}
+                        </div>
 
-                <div className="rounded-[28px] border border-white/80 bg-white/88 p-4">
+                        {/* Content bubble */}
+                        <div className="flex flex-col gap-1.5">
+                          <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
+                            message.role === "user"
+                              ? "bg-sky-950 text-white rounded-tr-none"
+                              : "bg-white/80 border border-border/80 text-foreground/90 rounded-tl-none"
+                          }`}>
+                            <p className="whitespace-pre-line">{message.content}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {(isSummarizing || isChatLoading) && (
+                      <div className="flex gap-3 mr-auto items-center">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-border shadow-sm">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        </div>
+                        <div className="rounded-2xl rounded-tl-none bg-white/60 border border-border/60 px-4 py-3 text-xs text-muted-foreground">
+                          {isSummarizing ? "Generating plain-language legal brief..." : "Analyzing documents & extracting answers..."}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+                <ChatMinimap messages={messages} />
+              </div>
+
+              {/* Chat Composer */}
+              <div className="border-t border-border/40 bg-white/50 p-4">
+                <div className="relative rounded-2xl border border-white bg-white/90 p-3 shadow-sm focus-within:shadow-md transition">
                   <Textarea
                     value={question}
                     onChange={(event) => setQuestion(event.target.value)}
-                    placeholder="Ask about deadlines, evidence, missing facts, legal risk, or what the document appears to require."
-                    className="min-h-[160px] resize-none border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
+                    placeholder="Ask about contract dates, liabilities, obligations, clauses, or discrepancies..."
+                    className="min-h-[96px] w-full resize-none border-0 bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground/70 focus-visible:ring-0 shadow-none focus:outline-none"
                     onKeyDown={(event) => {
                       if (event.key === "Enter" && !event.shiftKey) {
                         event.preventDefault()
@@ -564,45 +611,47 @@ export function DocumentSimplifierWorkspace() {
                       }
                     }}
                   />
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Shift+Enter for a new line. Enter to send.
-                    </p>
-                    <Button onClick={() => void handleAsk()} disabled={isChatLoading || !question.trim() || workingDocuments.length === 0}>
-                      {isChatLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                      Ask about documents
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/30 pt-2.5 mt-2 px-1">
+                    <span className="text-[10px] text-muted-foreground/70">
+                      Enter to send · Shift+Enter for new line
+                    </span>
+
+                    <Button
+                      onClick={() => void handleAsk()}
+                      disabled={isChatLoading || !question.trim() || workingDocuments.length === 0}
+                      size="sm"
+                      className="rounded-full h-8 px-4"
+                    >
+                      {isChatLoading ? (
+                        <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Send className="mr-1.5 h-3.5 w-3.5" />
+                      )}
+                      Ask Document
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card className="glass-panel border-white/70">
-              <CardHeader>
-                <CardTitle className="text-xl">How this mode behaves</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm leading-7 text-muted-foreground">
-                <p>The summary action creates a readable brief and saves it as a workspace artifact using the existing simplifier flow.</p>
-                <p>The chat mode answers follow-up questions from the attached document text and clearly flags what the documents do not show.</p>
-                <p>For filings, deadlines, or fact disputes with real legal consequences, the output should still be reviewed by a licensed lawyer or relevant authority.</p>
-              </CardContent>
-            </Card>
-
-            {latestAssistantMessage ? (
-              <Card className="glass-panel border-white/70">
-                <CardHeader>
-                  <CardTitle className="text-xl">Latest output</CardTitle>
-                  <CardDescription>Quick access to the most recent assistant response in this document session.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-2xl border border-white/80 bg-white/85 p-4">
-                    <p className="whitespace-pre-line text-sm leading-7 text-foreground/85">{latestAssistantMessage.content}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : null}
+            {/* Quick Starter Questions Row */}
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Quick Queries</span>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {quickQuestions.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => void handleAsk(item)}
+                    className="rounded-2xl border border-white/60 bg-white/40 p-4 text-left text-xs leading-relaxed text-foreground/80 transition-all hover:bg-white hover:shadow-sm"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </section>
+        </div>
       </div>
     </main>
   )

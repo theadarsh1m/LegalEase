@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import type { ConversationMessage, ConversationSummary } from "@/lib/db"
+import { ChatMinimap } from "./chat-minimap"
 
 interface AssistantSource {
   id: string
@@ -296,28 +297,11 @@ export function AssistantWorkspace({
                 RAG-grounded AI legal guidance
               </div>
               <h1 className="mt-5 font-display text-4xl font-semibold leading-tight sm:text-5xl">
-                A cleaner legal assistant that stays close to sources and next steps.
+                AI Legal Assistant
               </h1>
               <p className="mt-4 text-base leading-7 text-muted-foreground md:text-lg">
-                Use retrieved legal context for Indian law guidance, continue saved threads, and export the conversation
-                when you need a structured case record.
+                Conversational legal workspace loaded with RAG memory, interactive drafting connections, and secure threat tracking.
               </p>
-            </div>
-          </div>
-
-          {/* Feature chips row */}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="font-medium">Gemini answers + legal retrieval</span>
-            </div>
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
-              <MessageSquare className="h-4 w-4 text-primary" />
-              <span className="font-medium">Thread history</span>
-            </div>
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/60 px-4 py-2 text-sm backdrop-blur-sm">
-              <Download className="h-4 w-4 text-primary" />
-              <span className="font-medium">JSON export</span>
             </div>
           </div>
         </section>
@@ -325,200 +309,212 @@ export function AssistantWorkspace({
         {/* Subtle divider */}
         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-        <section className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
-          <div className="space-y-6">
-            <Card className="glass-panel border-white/70">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <div>
-                  <CardTitle className="text-xl">Threads</CardTitle>
-                  <CardDescription>Continue a saved matter or start a new one.</CardDescription>
-                </div>
-                <Button type="button" variant="outline" onClick={startNewConversation}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+          {/* ── Left Sidebar (History & Settings) ── */}
+          <aside className="flex flex-col gap-6">
+            {/* New Thread / Thread List Container */}
+            <div className="flex flex-col gap-4 rounded-3xl border border-white/60 bg-white/40 p-4 backdrop-blur-sm">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Threads</span>
+                <Button 
+                  onClick={startNewConversation}
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-full hover:bg-white/80"
+                  title="New conversation"
+                >
+                  <Plus className="h-4 w-4" />
                 </Button>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {threadList.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No saved threads yet. Send a message to create your first one.</p>
-                ) : (
-                  threadList.map((conversation) => (
-                    <button
-                      key={conversation.id}
-                      type="button"
-                      onClick={() => void loadConversation(conversation.id)}
-                      className={`w-full rounded-3xl border p-4 text-left transition ${
-                        conversation.id === conversationId
-                          ? "border-emerald-400/70 bg-emerald-50"
-                          : "border-white/80 bg-white/85 hover:border-amber-300 hover:bg-amber-50/70"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="line-clamp-2 text-sm font-semibold text-foreground">{conversation.title}</p>
-                        {conversation.urgency === "emergency" ? (
-                          <Badge className="shrink-0 bg-red-700 text-white hover:bg-red-700">Emergency</Badge>
-                        ) : null}
-                      </div>
-                      <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{conversation.preview}</p>
-                      <p className="mt-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        {conversation.issueType} · {formatDate(conversation.updatedAt)}
-                      </p>
-                    </button>
-                  ))
-                )}
+              </div>
 
-                {isLoadingConversation ? (
-                  <div className="rounded-2xl border border-white/80 bg-white/80 p-4 text-sm text-muted-foreground">
-                    <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
-                    Loading conversation...
+              <ScrollArea className="h-[280px] pr-2">
+                <div className="flex flex-col gap-2">
+                  {threadList.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-muted-foreground">
+                      No saved threads yet
+                    </div>
+                  ) : (
+                    threadList.map((conversation) => (
+                      <button
+                        key={conversation.id}
+                        onClick={() => void loadConversation(conversation.id)}
+                        className={`group relative flex flex-col gap-1 rounded-2xl p-3 text-left transition-all ${
+                          conversation.id === conversationId
+                            ? "bg-white shadow-sm border border-border"
+                            : "hover:bg-white/50 border border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="line-clamp-1 text-xs font-semibold text-foreground">
+                            {conversation.title}
+                          </span>
+                          {conversation.urgency === "emergency" && (
+                            <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0 mt-1" />
+                          )}
+                        </div>
+                        <span className="line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
+                          {conversation.preview}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground/70 mt-1">
+                          {formatDate(conversation.updatedAt)}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+
+            {/* Quick Connected Tools Card */}
+            <div className="rounded-3xl border border-white/60 bg-white/40 p-5 backdrop-blur-sm space-y-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block">Connected Tools</span>
+              <div className="flex flex-col gap-2">
+                <Button asChild variant="outline" className="w-full justify-start rounded-2xl h-10 border-white/80 bg-white/60 hover:bg-white">
+                  <Link href="/tools/document-generator">
+                    <FileText className="mr-2 h-4 w-4 text-primary" />
+                    <span className="text-xs">Draft Studio</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-start rounded-2xl h-10 border-white/80 bg-white/60 hover:bg-white">
+                  <Link href="/tools/document-simplifier">
+                    <Sparkles className="mr-2 h-4 w-4 text-primary" />
+                    <span className="text-xs">Simplifier</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-start rounded-2xl h-10 border-white/80 bg-white/60 hover:bg-white">
+                  <Link href="/resources/legal-library">
+                    <BookOpenText className="mr-2 h-4 w-4 text-primary" />
+                    <span className="text-xs">Legal Library</span>
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </aside>
+
+          {/* ── Right Workspace (Chat & Input) ── */}
+          <div className="flex flex-col gap-6">
+            {/* Main Chat Panel */}
+            <div className="flex flex-col rounded-3xl border border-white bg-white/30 backdrop-blur-md shadow-xl shadow-emerald-950/5 overflow-hidden">
+              {/* Chat Panel Header */}
+              <div className="flex items-center justify-between border-b border-border/40 bg-white/60 px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Scale className="h-4 w-4" />
                   </div>
-                ) : null}
-              </CardContent>
-            </Card>
-
-            <Card className="glass-panel border-white/70">
-              <CardHeader>
-                <CardTitle className="text-xl">Matter framing</CardTitle>
-                <CardDescription>Set the context before you send the next message.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Issue type</p>
-                  <Select value={issueType} onValueChange={setIssueType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {issueTypes.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Urgency</p>
-                  <Select value={urgency} onValueChange={setUrgency}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {urgencyLevels.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
-            <Card className="glass-panel border-white/70">
-              <CardHeader className="space-y-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <CardTitle className="text-2xl">Conversation</CardTitle>
-                    <CardDescription>
-                      {conversationId ? "This thread is linked to your workspace account." : "Send the first message to create a saved thread."}
-                    </CardDescription>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-foreground">
+                        {conversationId ? "Active Legal Thread" : "New Matter Draft"}
+                      </span>
+                      <Badge variant="secondary" className="text-[10px] h-4 px-2">
+                        {conversationId ? "Saved" : "Unsaved"}
+                      </Badge>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground block">
+                      RAG-grounded guidance based on Indian law references
+                    </span>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => downloadJsonFile(`legalease-assistant-${conversationId ?? "draft"}.json`, conversationExport)}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Export JSON
-                  </Button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">Issue: {issueType}</Badge>
-                  <Badge variant="outline">Urgency: {urgency}</Badge>
-                  <Badge variant="outline">{conversationId ? "Saved thread" : "Unsaved draft"}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <ScrollArea className="h-[640px] pr-4">
-                  <div className="space-y-4">
+
+                <Button
+                  onClick={() => downloadJsonFile(`legalease-assistant-${conversationId ?? "draft"}.json`, conversationExport)}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full border-white/80 bg-white/60 hover:bg-white text-xs h-8"
+                >
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  Export
+                </Button>
+              </div>
+
+              {/* Scrollable Conversation Workspace */}
+              <div className="p-6">
+                <ScrollArea className="h-[480px] pr-4">
+                  <div className="flex flex-col gap-6">
                     {messages.map((message) => (
                       <div
                         key={message.id}
-                        className={`rounded-[28px] border p-5 ${
-                          message.role === "assistant"
-                            ? "border-white/80 bg-white/85"
-                            : "ml-auto border-emerald-900/10 bg-emerald-950 text-white"
+                        id={message.role === "user" ? `chat-msg-${message.id}` : undefined}
+                        className={`flex gap-3 max-w-[85%] ${
+                          message.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
                         }`}
                       >
-                        <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.18em]">
-                          {message.role === "assistant" ? (
-                            <>
-                              <Image src="/legalease.png" alt="LegalEase" width={20} height={20} className="rounded-md object-contain" />
-                              LegalEase
-                            </>
+                        {/* Avatar */}
+                        <div className={`flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-full border shadow-sm ${
+                          message.role === "user" 
+                            ? "bg-emerald-950 border-emerald-900 text-white" 
+                            : "bg-white border-border"
+                        }`}>
+                          {message.role === "user" ? (
+                            <span className="text-[10px] font-bold">U</span>
                           ) : (
-                            <>
-                              <MessageSquareQuote className="h-4 w-4" />
-                              You
-                            </>
+                            <Image src="/legalease.png" alt="LegalEase" width={16} height={16} className="rounded-sm object-contain" />
                           )}
                         </div>
 
-                        <p
-                          className={`whitespace-pre-line text-sm leading-7 ${
-                            message.role === "assistant" ? "text-foreground/85" : "text-white/92"
-                          }`}
-                        >
-                          {message.content}
-                        </p>
+                        {/* Content bubble */}
+                        <div className="flex flex-col gap-1.5">
+                          <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
+                            message.role === "user"
+                              ? "bg-emerald-950 text-white rounded-tr-none"
+                              : "bg-white/80 border border-border/80 text-foreground/90 rounded-tl-none"
+                          }`}>
+                            <p className="whitespace-pre-line">{message.content}</p>
 
-                        {message.role === "assistant" && message.sources?.length ? (
-                          <div className="mt-4 grid gap-3">
-                            {message.sources.map((source) => (
-                              <div key={source.id} className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div>
-                                    <p className="text-sm font-semibold text-amber-950">{source.title}</p>
-                                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-amber-800">
-                                      {source.sourceTitle}
-                                    </p>
-                                  </div>
-                                  {typeof source.score === "number" ? (
-                                    <Badge className="border-amber-300 bg-amber-100 text-amber-950 hover:bg-amber-100" variant="outline">
-                                      {Math.round(source.score * 100)}% match
-                                    </Badge>
-                                  ) : null}
+                            {/* Source cards in assistant response */}
+                            {message.role === "assistant" && message.sources?.length ? (
+                              <div className="mt-4 pt-3 border-t border-border/40 space-y-2">
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block">
+                                  Retrieved Legal Sources
+                                </span>
+                                <div className="flex flex-col gap-2">
+                                  {message.sources.map((source) => (
+                                    <div key={source.id} className="rounded-xl border border-amber-200 bg-amber-50/50 p-3 text-xs">
+                                      <div className="flex items-center justify-between gap-2 mb-1">
+                                        <span className="font-semibold text-amber-950 line-clamp-1">{source.title}</span>
+                                        {typeof source.score === "number" && (
+                                          <Badge className="border-amber-300 bg-amber-100 text-amber-950 text-[9px] hover:bg-amber-100 h-4 px-1.5" variant="outline">
+                                            {Math.round(source.score * 100)}% match
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <span className="text-[9px] font-medium uppercase tracking-wider text-amber-800 block mb-1.5">
+                                        {source.sourceTitle}
+                                      </span>
+                                      <p className="text-amber-950/80 leading-relaxed font-sans">{source.excerpt}</p>
+                                    </div>
+                                  ))}
                                 </div>
-                                <p className="mt-2 text-sm leading-6 text-amber-950/80">{source.excerpt}</p>
                               </div>
-                            ))}
+                            ) : null}
                           </div>
-                        ) : null}
+                        </div>
                       </div>
                     ))}
 
-                    {isLoading ? (
-                      <div className="rounded-[28px] border border-white/80 bg-white/85 p-5">
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Retrieving legal context and generating a grounded answer...
+                    {isLoading && (
+                      <div className="flex gap-3 mr-auto items-center">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-border shadow-sm">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        </div>
+                        <div className="rounded-2xl rounded-tl-none bg-white/60 border border-border/60 px-4 py-3 text-xs text-muted-foreground">
+                          Thinking & searching legal database...
                         </div>
                       </div>
-                    ) : null}
+                    )}
                   </div>
                 </ScrollArea>
+                <ChatMinimap messages={messages} />
+              </div>
 
-                <Separator />
-
-                <div className="rounded-[28px] border border-white/80 bg-white/88 p-4">
+              {/* Chat Composer */}
+              <div className="border-t border-border/40 bg-white/50 p-4">
+                <div className="relative rounded-2xl border border-white bg-white/90 p-3 shadow-sm focus-within:shadow-md transition">
                   <Textarea
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Describe the issue, timeline, people involved, notices you received, money at stake, evidence you have, and what outcome you want."
-                    className="min-h-[180px] resize-none border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
+                    placeholder="Describe your legal matter, ask about a policy, or frame a next step..."
+                    className="min-h-[96px] w-full resize-none border-0 bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground/70 focus-visible:ring-0 shadow-none focus:outline-none"
                     onKeyDown={(event) => {
                       if (event.key === "Enter" && !event.shiftKey) {
                         event.preventDefault()
@@ -526,99 +522,85 @@ export function AssistantWorkspace({
                       }
                     }}
                   />
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Shift+Enter for a new line. Enter to send.
-                    </p>
-                    <Button onClick={() => void sendMessage(query)} disabled={isLoading || !query.trim()}>
-                      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                      Send to assistant
-                    </Button>
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/30 pt-2.5 mt-2 px-1">
+                    <div className="flex items-center gap-2">
+                      {/* Integrated Selects */}
+                      <div className="flex items-center gap-1.5 bg-secondary/50 rounded-full px-2 py-1">
+                        <span className="text-[10px] text-muted-foreground/80 font-medium pl-1.5">Issue:</span>
+                        <Select value={issueType} onValueChange={setIssueType}>
+                          <SelectTrigger className="h-6 border-0 bg-transparent px-2 text-xs font-semibold hover:bg-white/60 rounded-full shadow-none w-auto gap-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {issueTypes.map((item) => (
+                              <SelectItem key={item.value} value={item.value} className="text-xs">
+                                {item.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 bg-secondary/50 rounded-full px-2 py-1">
+                        <span className="text-[10px] text-muted-foreground/80 font-medium pl-1.5">Urgency:</span>
+                        <Select value={urgency} onValueChange={setUrgency}>
+                          <SelectTrigger className={`h-6 border-0 bg-transparent px-2 text-xs font-semibold hover:bg-white/60 rounded-full shadow-none w-auto gap-1 ${
+                            urgency === "emergency" ? "text-red-600 font-bold" : ""
+                          }`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {urgencyLevels.map((item) => (
+                              <SelectItem key={item.value} value={item.value} className="text-xs">
+                                {item.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="hidden text-[10px] text-muted-foreground/70 sm:inline">
+                        Shift+Enter for new line
+                      </span>
+                      <Button
+                        onClick={() => void sendMessage(query)}
+                        disabled={isLoading || !query.trim()}
+                        size="sm"
+                        className="rounded-full h-8 px-4"
+                      >
+                        {isLoading ? (
+                          <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Send className="mr-1.5 h-3.5 w-3.5" />
+                        )}
+                        Send
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="glass-panel border-white/70">
-              <CardHeader>
-                <CardTitle className="text-xl">Starter prompts</CardTitle>
-                <CardDescription>Use these for a quick check of the new assistant flow.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
+            {/* Quick Starter Prompts Row */}
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Starter Prompts</span>
+              <div className="grid gap-3 sm:grid-cols-2">
                 {suggestions.map((suggestion) => (
                   <button
                     key={suggestion}
                     type="button"
                     onClick={() => setQuery(suggestion)}
-                    className="w-full rounded-2xl border border-white/80 bg-white/85 px-4 py-3 text-left text-sm leading-6 text-foreground/80 transition hover:border-amber-300 hover:bg-amber-50"
+                    className="rounded-2xl border border-white/60 bg-white/40 p-4 text-left text-xs leading-relaxed text-foreground/80 transition-all hover:bg-white hover:shadow-sm"
                   >
                     {suggestion}
                   </button>
                 ))}
-              </CardContent>
-            </Card>
-
-            <Card className="glass-panel border-white/70">
-              <CardHeader>
-                <CardTitle className="text-xl">Latest retrieved sources</CardTitle>
-                <CardDescription>These are the source cards attached to the latest assistant reply.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {latestAssistantSources.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No sources retrieved yet. Send a question to populate this panel.</p>
-                ) : (
-                  latestAssistantSources.map((source) => (
-                    <div key={source.id} className="rounded-2xl border border-white/80 bg-white/85 p-4">
-                      <p className="text-sm font-semibold text-foreground">{source.title}</p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        {source.category || source.sourceTitle}
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{source.excerpt}</p>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
+              </div>
             </div>
-
-            <Card className="glass-panel border-white/70">
-              <CardHeader>
-                <CardTitle className="text-xl">Connected tools</CardTitle>
-                <CardDescription>Move from guidance into drafting or document analysis without losing context.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button asChild className="w-full justify-between">
-                  <Link href="/tools/document-generator">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Generate FIR, RTI, and notice drafts
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full justify-between">
-                  <Link href="/tools/document-simplifier">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Chat with legal documents
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full justify-between">
-                  <Link href="/resources/legal-library">
-                    <BookOpenText className="mr-2 h-4 w-4" />
-                    Browse legal library
-                  </Link>
-                </Button>
-                <div className="rounded-2xl border border-emerald-900/10 bg-emerald-50/70 p-4 text-sm leading-6 text-emerald-950">
-                  <div className="flex items-start gap-3">
-                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-                    <p>
-                      The assistant is designed to stay grounded in retrieved material, but high-stakes filings and urgent
-                      factual disputes should still be checked by a licensed advocate.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
-        </section>
+        </div>
       </div>
     </main>
   )

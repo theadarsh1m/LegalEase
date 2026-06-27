@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { ExternalLink, FileText, Loader2, UploadCloud } from "lucide-react"
+import { ExternalLink, FileText, Loader2, UploadCloud, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -47,6 +47,19 @@ export function DocumentVaultCard({ initialDocuments }: DocumentVaultCardProps) 
   const [category, setCategory] = useState("general")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  function cancelUpload() {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+      setIsUploading(false)
+      toast({
+        title: "Cancelled",
+        description: "The upload session was cancelled.",
+      })
+    }
+  }
 
   async function handleUpload() {
     if (!selectedFile) {
@@ -59,6 +72,8 @@ export function DocumentVaultCard({ initialDocuments }: DocumentVaultCardProps) 
     }
 
     setIsUploading(true)
+    const controller = new AbortController()
+    abortControllerRef.current = controller
 
     try {
       const formData = new FormData()
@@ -69,6 +84,7 @@ export function DocumentVaultCard({ initialDocuments }: DocumentVaultCardProps) 
       const response = await fetch("/api/documents/upload", {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       })
 
       const data = (await response.json()) as {
@@ -95,12 +111,18 @@ export function DocumentVaultCard({ initialDocuments }: DocumentVaultCardProps) 
         description: data.warning ?? "The file was saved to the vault and linked to your workspace.",
       })
     } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return
+      }
       toast({
         title: "Upload failed",
         description: error instanceof Error ? error.message : "Try again with a smaller or cleaner file.",
         variant: "destructive",
       })
     } finally {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null
+      }
       setIsUploading(false)
     }
   }
@@ -138,10 +160,18 @@ export function DocumentVaultCard({ initialDocuments }: DocumentVaultCardProps) 
             </Select>
           </div>
           <div className="flex items-end">
-            <Button onClick={handleUpload} disabled={isUploading || !selectedFile} className="w-full">
-              {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-              Upload
-            </Button>
+            {isUploading ? (
+              <Button onClick={cancelUpload} variant="destructive" className="w-full">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <X className="mr-1.5 h-3.5 w-3.5" />
+                Cancel
+              </Button>
+            ) : (
+              <Button onClick={handleUpload} disabled={!selectedFile} className="w-full">
+                <UploadCloud className="mr-2 h-4 w-4" />
+                Upload
+              </Button>
+            )}
           </div>
         </div>
 
