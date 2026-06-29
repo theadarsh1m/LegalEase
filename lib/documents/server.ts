@@ -1,48 +1,36 @@
 import path from "node:path"
 import fs from "node:fs"
 import os from "node:os"
-import { execFileSync } from "node:child_process"
 import mammoth from "mammoth"
+// @ts-ignore
+import pdfParse from "pdf-parse"
+import Tesseract from "tesseract.js"
 
 function normalizeExtractedText(value: string) {
   return value.replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim()
 }
 
-// ── PDF text extraction via child process ──
+// ── PDF text extraction ──
 
-function extractPdfText(buffer: Buffer): string {
-  const tmpPath = path.join(os.tmpdir(), `legalease-pdf-${Date.now()}.pdf`)
-  fs.writeFileSync(tmpPath, buffer)
-
+async function extractPdfText(buffer: Buffer): Promise<string> {
   try {
-    const scriptPath = path.join(process.cwd(), "scripts", "extract-pdf.cjs")
-    const result = execFileSync("node", [scriptPath, tmpPath], {
-      encoding: "utf-8",
-      maxBuffer: 50 * 1024 * 1024,
-      timeout: 30_000,
-    })
-    return result
-  } finally {
-    try { fs.unlinkSync(tmpPath) } catch {}
+    const data = await pdfParse(buffer)
+    return data.text || ""
+  } catch (err: any) {
+    throw new Error(err.message || "PDF extraction failed")
   }
 }
 
 // ── OCR via Tesseract.js (free, local, no API keys) ──
 
-function ocrImage(buffer: Buffer, extension: string): string {
-  const tmpPath = path.join(os.tmpdir(), `legalease-ocr-${Date.now()}${extension}`)
-  fs.writeFileSync(tmpPath, buffer)
-
+async function ocrImage(buffer: Buffer): Promise<string> {
   try {
-    const scriptPath = path.join(process.cwd(), "scripts", "ocr-image.cjs")
-    const result = execFileSync("node", [scriptPath, tmpPath], {
-      encoding: "utf-8",
-      maxBuffer: 50 * 1024 * 1024,
-      timeout: 60_000, // OCR can take a bit longer
+    const { data } = await Tesseract.recognize(buffer, "eng", {
+      logger: () => {}, // suppress progress logs
     })
-    return result
-  } finally {
-    try { fs.unlinkSync(tmpPath) } catch {}
+    return data.text || ""
+  } catch (err: any) {
+    throw new Error(err.message || "OCR failed")
   }
 }
 
@@ -162,7 +150,7 @@ export async function extractDocumentTextFromFile(file: File) {
   if (isPdf(file, lowerName)) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    let text = extractPdfText(buffer)
+    let text = await extractPdfText(buffer)
     text = normalizeExtractedText(text)
 
     // If pdf-parse found very little text, it's likely a scanned/image-based PDF
@@ -175,8 +163,7 @@ export async function extractDocumentTextFromFile(file: File) {
   if (isImage(file, lowerName)) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    const ext = getExtension(lowerName)
-    const text = ocrImage(buffer, ext)
+    const text = await ocrImage(buffer)
     return normalizeExtractedText(text)
   }
 

@@ -36,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${cinzel.variable}`}>
+    <html lang="en" className={`${inter.variable} ${cinzel.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
         <div className="relative flex min-h-screen flex-col">
           <SiteHeader />

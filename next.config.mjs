@@ -1,15 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
   images: {
     unoptimized: true,
   },
-  serverExternalPackages: ["pdfjs-dist", "mammoth"],
+  serverExternalPackages: ["pdfjs-dist", "mammoth", "pdf-parse", "tesseract.js"],
 }
 
 export default nextConfig
